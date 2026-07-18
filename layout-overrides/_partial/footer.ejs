@@ -52,95 +52,20 @@
     <% } %>
 </div>
 
-<% if(theme.cdn.enable) { %>
-    <% if(theme.cdn.choose == "aliyun") { %>
-        <%- js('https://npm.elemecdn.com/hexo-theme-a4@latest/source/js/highlight.min.js') %>
-        <%- js('https://npm.elemecdn.com/hexo-theme-a4@latest/source/js/highlightjs-line-numbers.js') %>
+<%# 本站固定本地资源（cdn.enable: false），原 CDN 分支已移除；toc/returnToTop/returnToLastPage 均为 source/js/ 下的原生 JS 覆盖版，无 jQuery 依赖 %>
+<!--目录-->
+<% if(theme.tool.leftToc && is_post()) { %>
+    <%- js('js/toc.js') %>
+<% } %>
 
-        <%- js('/js/randomPoem.js') %>
-        <!--回到顶部按钮-->
-        <% if(theme.tool.returnToTop) { %>
-            <%- js('/js/jquery-3.4.0.min.js') %>
-            <%- js('https://npm.elemecdn.com/hexo-theme-a4@latest/source/js/returnToTop.js') %>
-        <% } %>
-    
-        <!--目录-->
-        <% if(theme.tool.leftToc) { %>
-            <script src="/js/jquery-ui-1.12.1.min.js" type="text/javascript" ></script>
-            <script src="/js/jquery.tocify-1.9.0.min.js" type="text/javascript" ></script>
-            <%- js('https://npm.elemecdn.com/hexo-theme-a4@latest/source/js/toc.js') %>
-        <% } %>
-    <% } else if(theme.cdn.choose == "zzko") { %>
-        <%- js('https://jsd.cdn.zzko.cn/npm/hexo-theme-a4@latest/source/js/highlight.min.js') %>
-        <%- js('https://jsd.cdn.zzko.cn/npm/hexo-theme-a4@latest/source/js/highlightjs-line-numbers.js') %>
+<%- js('/js/randomPoem.js') %>
+<!--回到顶部按钮-->
+<% if(theme.tool.returnToTop) { %>
+    <%- js('js/returnToTop.js') %>
+<% } %>
 
-        <%- js('/js/randomPoem.js') %>
-        <!--回到顶部按钮-->
-        <% if(theme.tool.returnToTop) { %>
-            <%- js('/js/jquery-3.4.0.min.js') %>
-            <%- js('https://jsd.cdn.zzko.cn/npm/hexo-theme-a4@latest/source/js/returnToTop.js') %>
-        <% } %>
-    
-        <!--目录-->
-        <% if(theme.tool.leftToc) { %>
-            <script src="/js/jquery-ui-1.12.1.min.js" type="text/javascript" ></script>
-            <script src="/js/jquery.tocify-1.9.0.min.js" type="text/javascript" ></script>
-            <%- js('https://jsd.cdn.zzko.cn/npm/hexo-theme-a4@latest/source/js/toc.js') %>
-        <% } %>
-    <% } else if(theme.cdn.choose == "jsdelivr") { %>
-        <%- js('https://jsd.onmicrosoft.cn/npm/hexo-theme-a4@latest/source/js/highlight.min.js') %>
-        <%- js('https://jsd.onmicrosoft.cn/npm/hexo-theme-a4@latest/source/js/highlightjs-line-numbers.js') %>
-
-        <%- js('/js/randomPoem.js') %>
-        <!--回到顶部按钮-->
-        <% if(theme.tool.returnToTop) { %>
-            <%- js('/js/jquery-3.4.0.min.js') %>
-            <%- js('https://jsd.onmicrosoft.cn/npm/hexo-theme-a4@latest/source/js/returnToTop.js') %>
-        <% } %>
-        
-        <!--目录-->
-        <% if(theme.tool.leftToc) { %>
-            <script src="/js/jquery-ui-1.12.1.min.js" type="text/javascript" ></script>
-            <script src="/js/jquery.tocify-1.9.0.min.js" type="text/javascript" ></script>
-            <%- js('https://jsd.onmicrosoft.cn/npm/hexo-theme-a4@latest/source/js/toc.js') %>
-        <% } %>
-    <% } else if(theme.cdn.choose == "unpkg") { %>
-        <%- js('https://npm.onmicrosoft.cn/hexo-theme-a4@latest/source/js/highlight.min.js') %>
-        <%- js('https://npm.onmicrosoft.cn/hexo-theme-a4@latest/source/js/highlightjs-line-numbers.js') %>
-
-        <%- js('/js/randomPoem.js') %>
-        <!--回到顶部按钮-->
-        <% if(theme.tool.returnToTop) { %>
-            <%- js('/js/jquery-3.4.0.min.js') %>
-            <%- js('https://npm.onmicrosoft.cn/hexo-theme-a4@latest/source/js/returnToTop.js') %>
-        <% } %>
-    
-        <!--目录-->
-        <% if(theme.tool.leftToc) { %>
-            <script src="/js/jquery-ui-1.12.1.min.js" type="text/javascript" ></script>
-            <script src="/js/jquery.tocify-1.9.0.min.js" type="text/javascript" ></script>
-            <%- js('https://npm.onmicrosoft.cn/hexo-theme-a4@latest/source/js/toc.js') %>
-        <% } %>
-    <% } %>
-<% } else { %>
-    <%- js('/js/jquery-3.4.0.min.js') %>
-    <!--目录-->
-    <% if(theme.tool.leftToc) { %>
-        <script src="/js/jquery-ui-1.12.1.min.js" type="text/javascript" ></script>
-        <script src="/js/jquery.tocify-1.9.0.min.js" type="text/javascript" ></script>
-        <%- js('js/toc.js') %>
-    <% } %>
-
-    <%- js('/js/randomPoem.js') %>
-    <!--回到顶部按钮-->
-    <% if(theme.tool.returnToTop) { %>
-        <%- js('js/returnToTop.js') %>
-    <% } %>
-
-    <% if(theme.tool.returnToTop) { %>
-        <%- js('js/returnToLastPage.js') %>
-    <% } %>
-
+<% if(theme.tool.returnToLast) { %>
+    <%- js('js/returnToLastPage.js') %>
 <% } %>
 
 

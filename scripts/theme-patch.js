@@ -33,3 +33,17 @@ hexo.on('generateBefore', function () {
     hexo.log.info('theme-patch: overrode %s', view);
   });
 });
+
+// Drop theme assets that this site never loads (darkMode uses darkreader,
+// hitokoto/comments are disabled, randomHeaderContent is replaced by randomPoem).
+hexo.extend.filter.register('after_generate', function () {
+  const theme = hexo.theme.config || {};
+  const unused = ['js/darkmode-js.min.js', 'js/randomHeaderContent.js'];
+
+  if (!(theme.index && theme.index.hitokoto)) unused.push('js/hitokoto.js');
+  if (!(theme.comment && theme.comment.enable)) unused.push('js/waline.mjs');
+
+  unused.forEach(function (route) {
+    hexo.route.remove(route);
+  });
+});

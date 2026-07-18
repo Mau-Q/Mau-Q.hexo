@@ -7,7 +7,11 @@
   var fallback = document.querySelector('#hiddenHeaderContentArray span');
   if (fallback) target.textContent = fallback.textContent.trim();
 
-  fetch('/data/poems.json', { cache: 'force-cache' })
+  // 诗词库在构建时被 scripts/poem-shards.js 拆成 10 片，这里只随机取一片（约 15K）。
+  var SHARD_COUNT = 10;
+  var shard = Math.floor(Math.random() * SHARD_COUNT);
+
+  fetch('/data/poems/' + shard + '.json', { cache: 'force-cache' })
     .then(function (response) {
       if (!response.ok) throw new Error('Unable to load local poetry data');
       return response.json();

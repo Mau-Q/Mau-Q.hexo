@@ -11,6 +11,14 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore file modification times
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q git-restore-mtime
+          git restore-mtime
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

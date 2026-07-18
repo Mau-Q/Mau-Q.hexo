@@ -63,9 +63,14 @@ npm run build
 | `blog-slug-dictionary.json` | 自动生成 slug 的中文技术词典 |
 | `tools/sync-obsidian-blogs.js` | Obsidian `Blogs/` 到 Hexo 的同步脚本 |
 | `tools/blog-doctor.js` | 发布前最终验收脚本 |
+| `scripts/theme-patch.js` | 构建时覆盖 A4 主题模板、清理无用主题产物 |
+| `scripts/poem-shards.js` | 构建时把诗词库拆成 10 片（`/data/poems/0-9.json`） |
 | `source/css/custom.css` | 自定义 CSS（字体、代码块等） |
-| `source/data/poems.json` | 首页本地诗词库（1000 条） |
-| `source/js/randomPoem.js` | 首页随机诗词加载逻辑 |
+| `source/data/poems.json` | 首页本地诗词库源数据（1000 条，构建时分片，不直接发布） |
+| `source/js/randomPoem.js` | 首页随机诗词加载逻辑（随机取一个分片，约 15K） |
+| `source/js/toc.js` | 文章左侧目录（原生 JS，覆盖主题的 jQuery/tocify 实现） |
+| `source/js/returnToTop.js` | 回到顶部按钮（原生 JS 覆盖版） |
+| `source/js/returnToLastPage.js` | 回退按钮（原生 JS 覆盖版） |
 | `source/robots.txt` | SEO robots 配置 |
 | `.github/workflows/deploy.yml` | 自动部署 |
 
@@ -114,5 +119,9 @@ npm run publish:local
   - `layout-overrides/_partial/footer.ejs`
 - 升级 `hexo-theme-a4` 后，需要对比 `node_modules/hexo-theme-a4/layout/` 中的原始模板与 `layout-overrides/` 文件，确认新版主题结构没有变化，再重新构建。
 - `source/css/unicons.css` 是对主题同名文件的本地覆盖，用于移除远程字体 fallback；升级主题后也需要与 `node_modules/hexo-theme-a4/source/css/unicons.css` 对比。
+- 站点已完全去 jQuery：`source/js/toc.js`、`returnToTop.js`、`returnToLastPage.js` 是对主题同名文件的原生 JS 覆盖；升级主题后需确认这三个文件的行为仍与主题版本等价。
+- 暗黑模式的 `darkreader.min.js`（88K）按需加载：浅色模式用户不会下载；跟随系统或手动切换到暗色时才加载。
+- 首页诗词库在构建时由 `scripts/poem-shards.js` 拆成 10 片，首页每次只请求一片；分片数量改动时需同步修改 `source/js/randomPoem.js` 中的 `SHARD_COUNT`。
+- `_config.yml` 的 `updated_option: mtime` 依赖文件修改时间：GitHub Actions 部署已在 workflow 中用 `git restore-mtime` 还原提交时间；本地 `publish:local` 不受影响。
 - 字体使用本地霞鹜文楷 Lite 版，覆盖常用汉字，少数生僻字会回退到系统字体。
-- 首页诗词数据来自 [chinese-poetry](https://github.com/chinese-poetry/chinese-poetry)，运行时只读取本地 `source/data/poems.json`，不调用远程接口。
+- 首页诗词数据来自 [chinese-poetry](https://github.com/chinese-poetry/chinese-poetry)，运行时只读取本地分片数据，不调用远程接口。

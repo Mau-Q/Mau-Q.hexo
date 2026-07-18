@@ -8,8 +8,9 @@
 
     <body>
         <% if(theme.tool.darkMode) { %>
-        <script src="/js/darkreader.min.js"></script>
         <script>
+        (function () {
+            // darkreader.min.js（88K）按需加载：浅色模式用户完全不下载
             const drOptions = {
                 brightness: 100,
                 contrast: 95,
@@ -19,11 +20,37 @@
                 scrollbarStyle: 'native'
             };
 
+            let loading = null;
+            function loadDarkReader() {
+                if (window.DarkReader) return Promise.resolve();
+                if (!loading) {
+                    loading = new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = '/js/darkreader.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                return loading;
+            }
+
+            function enableDark() {
+                document.documentElement.style.backgroundColor = '#1e1e1e';
+                document.documentElement.style.colorScheme = 'dark';
+                return loadDarkReader().then(() => DarkReader.enable(drOptions));
+            }
+
+            function disableDark() {
+                document.documentElement.style.backgroundColor = '';
+                document.documentElement.style.colorScheme = '';
+                if (window.DarkReader) DarkReader.disable();
+            }
+
             const savedTheme = localStorage.getItem('theme');
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
-                DarkReader.enable(drOptions);
-            }
+            const startDark = savedTheme === 'dark' || (!savedTheme && systemDark);
+            if (startDark) enableDark();
 
             window.addEventListener('DOMContentLoaded', () => {
                 const btn = document.createElement('button');
@@ -45,29 +72,29 @@
                     box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
                     transition: transform 0.2s, background-color 0.3s;
                 `;
-                // 根据当前状态初始化按钮颜色
-                if (DarkReader.isEnabled()) {
-                    btn.style.backgroundColor = '#1e1e1e';
-                    btn.style.color = '#fff';
+                let isDark = startDark;
+                function paintButton() {
+                    btn.style.backgroundColor = isDark ? '#1e1e1e' : '#f7f5ed';
+                    btn.style.color = isDark ? '#fff' : '#000';
                 }
+                paintButton();
                 btn.onmouseover = () => btn.style.transform = 'scale(1.1)';
                 btn.onmouseout = () => btn.style.transform = 'scale(1)';
                 document.body.appendChild(btn);
                 // 点击切换逻辑
                 btn.addEventListener('click', () => {
-                    if (DarkReader.isEnabled()) {
-                        DarkReader.disable();
-                        localStorage.setItem('theme', 'light');
-                        btn.style.backgroundColor = '#f7f5ed';
-                        btn.style.color = '#000';
-                    } else {
-                        DarkReader.enable(drOptions);
+                    isDark = !isDark;
+                    if (isDark) {
+                        enableDark();
                         localStorage.setItem('theme', 'dark');
-                        btn.style.backgroundColor = '#1e1e1e';
-                        btn.style.color = '#fff';
+                    } else {
+                        disableDark();
+                        localStorage.setItem('theme', 'light');
                     }
+                    paintButton();
                 });
             });
+        })();
         </script>
         <% } %>
         <% if(theme.tool.leftToc) { %>
