@@ -6,7 +6,7 @@
  * Patches applied:
  *  - head.ejs:     remove CDN Chinese font CSS link (use local @font-face instead)
  *  - layout.ejs:   use local /js/darkreader.min.js instead of jsdelivr CDN
- *  - footer.ejs:   use local jQuery and the local 1,000-line poetry library
+ *  - footer.ejs:   use native JS, local poetry shards and conditional galleries
  */
 'use strict';
 
@@ -34,14 +34,52 @@ hexo.on('generateBefore', function () {
   });
 });
 
-// Drop theme assets that this site never loads (darkMode uses darkreader,
-// hitokoto/comments are disabled, randomHeaderContent is replaced by randomPoem).
+// Drop theme assets that this site does not use. This keeps both the deployed
+// repository and the generated-site audit surface small.
 hexo.extend.filter.register('after_generate', function () {
   const theme = hexo.theme.config || {};
-  const unused = ['js/darkmode-js.min.js', 'js/randomHeaderContent.js'];
+  const unused = [
+    'js/darkmode-js.min.js',
+    'js/randomHeaderContent.js',
+    'css/a11y-dark.min.css',
+    'data/poems.json',
+    'index/index.html',
+    'img/market.png',
+    'img/archive.png',
+    'img/comment.png',
+    'img/index.png',
+    'img/tags&&categories.png',
+    'img/A4-favicon.png',
+    'img/A4800x500.png',
+    'img/favicon.ico',
+    'img/favicon.png'
+  ];
 
   if (!(theme.index && theme.index.hitokoto)) unused.push('js/hitokoto.js');
-  if (!(theme.comment && theme.comment.enable)) unused.push('js/waline.mjs');
+  if (!(theme.comment && theme.comment.enable)) {
+    unused.push('js/waline.mjs', 'css/waline.css');
+  }
+
+  const contentItems = []
+    .concat(hexo.locals.get('posts').toArray(), hexo.locals.get('pages').toArray());
+  const hasGallery = contentItems.some(item => /gallery-item/.test(String(item.content || '')));
+  if (!hasGallery) {
+    unused.push(
+      'css/lightgallery-bundle.min.css',
+      'images/loading.gif',
+      'fonts/lg.svg',
+      'fonts/lg.ttf',
+      'fonts/lg.woff',
+      'fonts/lg.woff2',
+      'js/lightgallery/lightgallery.umd.min.js',
+      'js/lightgallery/plugins/lg-thumbnail.umd.min.js',
+      'js/lightgallery/plugins/lg-fullscreen.umd.min.js',
+      'js/lightgallery/plugins/lg-autoplay.umd.min.js',
+      'js/lightgallery/plugins/lg-zoom.umd.min.js',
+      'js/lightgallery/plugins/lg-rotate.umd.min.js',
+      'js/lightgallery/plugins/lg-paper.umd.min.js'
+    );
+  }
 
   unused.forEach(function (route) {
     hexo.route.remove(route);

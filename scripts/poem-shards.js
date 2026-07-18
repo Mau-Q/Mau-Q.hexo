@@ -1,5 +1,5 @@
 /**
- * Poem shards: split source/data/poems.json (1,000 poems) into small shards
+ * Poem shards: split resources/poems.json (1,000 poems) into small shards
  * at build time so the homepage only fetches ~1/10 of the data per visit.
  *
  * Output routes: data/poems/0.json ... data/poems/<SHARD_COUNT - 1>.json
@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const SHARD_COUNT = 10;
-const SOURCE_FILE = path.join(hexo.source_dir, 'data', 'poems.json');
+const SOURCE_FILE = path.join(hexo.base_dir, 'resources', 'poems.json');
 
 hexo.extend.generator.register('poem-shards', function () {
   if (!fs.existsSync(SOURCE_FILE)) {
@@ -40,8 +40,4 @@ hexo.extend.generator.register('poem-shards', function () {
       }),
     };
   });
-});
-
-hexo.extend.filter.register('after_generate', function () {
-  hexo.route.remove('data/poems.json');
 });

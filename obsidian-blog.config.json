@@ -3,5 +3,6 @@
   "blogsDir": "Blogs",
   "postsDir": "source/_posts",
   "assetsDir": "source/img/blogs",
+  "manifestFile": "obsidian-blog.manifest.json",
   "defaultCategory": "技术"
 }

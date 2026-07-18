@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(process.env.BLOG_PROJECT_ROOT || path.resolve(__dirname, '..'));
 const configPath = path.join(projectRoot, 'obsidian-blog.config.json');
 const slugDictionaryPath = path.join(projectRoot, 'blog-slug-dictionary.json');
 const args = new Set(process.argv.slice(2));
@@ -34,12 +34,14 @@ const vaultDir = process.env.OBSIDIAN_VAULT || resolveFrom(projectRoot, config.v
 const blogsDir = process.env.OBSIDIAN_BLOGS_DIR || resolveFrom(vaultDir, config.blogsDir || 'Blogs');
 const postsDir = resolveFrom(projectRoot, config.postsDir || 'source/_posts');
 const assetsDir = resolveFrom(projectRoot, config.assetsDir || 'source/img/blogs');
+const manifestPath = resolveFrom(projectRoot, config.manifestFile || 'obsidian-blog.manifest.json');
 const defaultCategory = config.defaultCategory || '技术';
 const publicAssetsRoot = toPosix(path.relative(path.join(projectRoot, 'source'), assetsDir));
 
 const errors = [];
 const warnings = [];
 const copiedAssets = new Map();
+const generatedAssetFiles = new Set();
 let assetIndex = null;
 
 main();
@@ -76,6 +78,8 @@ function main() {
   if (errors.length && strict) {
     printErrorsAndExit();
   }
+
+  finalizeGeneratedContent(results.filter(Boolean));
 
   if (!readyNotes.length) {
     console.log(`No ready Obsidian blog posts found in ${blogsDir}`);
@@ -228,8 +232,8 @@ function syncNote(note, publishedMap) {
   const body = transformBody(note, slug, publishedMap);
   if (strict && errors.length > errorCountBeforeTransform) return null;
 
-  const frontMatter = { title, date, categories, tags };
-  if (note.data.updated) frontMatter.updated = formatDateValue(note.data.updated);
+  const updated = formatDateValue(note.data.updated, fs.statSync(note.file).mtime);
+  const frontMatter = { title, date, updated, categories, tags };
 
   const output = dumpFrontMatter(frontMatter, [
     `<!-- Generated from Obsidian: ${toPosix(path.relative(vaultDir, note.file))}. Edit the source note, then run npm run blog:sync. -->`,
@@ -245,8 +249,119 @@ function syncNote(note, publishedMap) {
 
   return {
     source: toPosix(path.relative(vaultDir, note.file)),
-    target: toPosix(path.relative(projectRoot, targetFile))
+    target: toPosix(path.relative(projectRoot, targetFile)),
+    targetFile
   };
+}
+
+function finalizeGeneratedContent(results) {
+  const expectedPosts = new Set(results.map(result => result.target));
+  const expectedAssets = new Set(generatedAssetFiles);
+  const previous = readManifest();
+  const stalePostFiles = new Set();
+
+  for (const rel of previous.posts || []) {
+    if (!expectedPosts.has(rel)) stalePostFiles.add(resolveManifestFile(rel, postsDir));
+  }
+
+  for (const file of discoverGeneratedPosts()) {
+    const rel = toPosix(path.relative(projectRoot, file));
+    if (!expectedPosts.has(rel)) stalePostFiles.add(file);
+  }
+
+  const staleAssetFiles = new Set();
+  for (const rel of previous.assets || []) {
+    if (!expectedAssets.has(rel)) staleAssetFiles.add(resolveManifestFile(rel, assetsDir));
+  }
+
+  // Backward-compatible cleanup for files produced before the manifest existed:
+  // a generated post named <slug>.md owns source/img/blogs/<slug>/.
+  for (const postFile of stalePostFiles) {
+    const slug = path.basename(postFile, path.extname(postFile));
+    const assetDir = path.join(assetsDir, slug);
+    if (fs.existsSync(assetDir)) {
+      for (const file of walkFiles(assetDir)) staleAssetFiles.add(file);
+    }
+  }
+
+  for (const file of [...stalePostFiles].sort()) {
+    removeGeneratedFile(file, postsDir);
+  }
+  for (const file of [...staleAssetFiles].sort()) {
+    removeGeneratedFile(file, assetsDir);
+  }
+
+  if (!dryRun) {
+    removeEmptyDirectories(assetsDir);
+    const manifest = {
+      version: 1,
+      posts: [...expectedPosts].sort(),
+      assets: [...expectedAssets].sort()
+    };
+    fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  }
+}
+
+function discoverGeneratedPosts() {
+  if (!fs.existsSync(postsDir)) return [];
+  return walkFiles(postsDir).filter(file => {
+    if (!file.endsWith('.md')) return false;
+    return fs.readFileSync(file, 'utf8').includes('<!-- Generated from Obsidian:');
+  });
+}
+
+function readManifest() {
+  if (!fs.existsSync(manifestPath)) return { version: 1, posts: [], assets: [] };
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    return {
+      version: manifest.version || 1,
+      posts: Array.isArray(manifest.posts) ? manifest.posts : [],
+      assets: Array.isArray(manifest.assets) ? manifest.assets : []
+    };
+  } catch (error) {
+    errors.push(`${toPosix(path.relative(projectRoot, manifestPath))}: invalid manifest: ${error.message}`);
+    if (strict) printErrorsAndExit();
+    return { version: 1, posts: [], assets: [] };
+  }
+}
+
+function resolveManifestFile(relativePath, allowedRoot) {
+  const fullPath = path.resolve(projectRoot, relativePath);
+  assertInside(fullPath, allowedRoot);
+  return fullPath;
+}
+
+function removeGeneratedFile(file, allowedRoot) {
+  assertInside(file, allowedRoot);
+  if (!fs.existsSync(file)) return;
+  const rel = toPosix(path.relative(projectRoot, file));
+  console.log(`${dryRun ? 'Would remove' : 'Removed'} stale generated file ${rel}`);
+  if (!dryRun) fs.unlinkSync(file);
+}
+
+function removeEmptyDirectories(root) {
+  if (!fs.existsSync(root)) return;
+  const directories = [];
+  function collect(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const child = path.join(directory, entry.name);
+      collect(child);
+      directories.push(child);
+    }
+  }
+  collect(root);
+  for (const directory of directories) {
+    if (fs.readdirSync(directory).length === 0) fs.rmdirSync(directory);
+  }
+}
+
+function assertInside(file, allowedRoot) {
+  const relative = path.relative(path.resolve(allowedRoot), path.resolve(file));
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(`Refusing to modify file outside ${allowedRoot}: ${file}`);
+  }
 }
 
 function getSlug(note) {
@@ -623,6 +738,7 @@ function copyAsset(sourceFile, slug) {
     fs.copyFileSync(sourceFile, targetFile);
   }
 
+  generatedAssetFiles.add(toPosix(path.relative(projectRoot, targetFile)));
   copiedAssets.set(cacheKey, webPath);
   return webPath;
 }

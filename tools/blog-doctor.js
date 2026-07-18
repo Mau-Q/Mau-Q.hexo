@@ -4,9 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(process.env.BLOG_PROJECT_ROOT || path.resolve(__dirname, '..'));
 const publicDir = path.join(projectRoot, 'public');
 const sourcePostsDir = path.join(projectRoot, 'source', '_posts');
+const siteConfigPath = path.join(projectRoot, '_config.yml');
+const siteConfig = readYaml(siteConfigPath, {});
 const obsidianConfigPath = path.join(projectRoot, 'obsidian-blog.config.json');
 const obsidianConfig = readJson(obsidianConfigPath, {});
 const obsidianVaultDir = process.env.OBSIDIAN_VAULT || resolveFrom(projectRoot, obsidianConfig.vaultDir || '../../rui');
@@ -15,14 +17,12 @@ const obsidianBlogsDir = process.env.OBSIDIAN_BLOGS_DIR || resolveFrom(obsidianV
 const expectedPublicFiles = [
   'sitemap.xml',
   'atom.xml',
-  'robots.txt',
-  'posts/2026/index.html',
-  'posts/hello-world/index.html'
+  'robots.txt'
 ];
 
 const externalPatterns = [
   ['remote script src', /<script\b[^>]*\bsrc=["']https?:\/\//i],
-  ['remote link href', /<link\b[^>]*\bhref=["']https?:\/\//i],
+  ['remote resource link', /<link\b(?=[^>]*\brel=["'](?:stylesheet|preload|modulepreload|icon|alternate icon)["'])(?=[^>]*\bhref=["']https?:\/\/)[^>]*>/i],
   ['remote css url', /url\(\s*["']?https?:\/\//i],
   ['remote css import', /@import\s+(?:url\()?\s*["']?https?:\/\//i]
 ];
@@ -49,6 +49,7 @@ main();
 
 function main() {
   checkExpectedPublicFiles();
+  checkSitemapTargets();
   scanPublicFiles();
   scanMarkdownFiles(sourcePostsDir, () => true);
   scanMarkdownFiles(obsidianBlogsDir, isReadyObsidianBlog);
@@ -83,6 +84,72 @@ function checkExpectedPublicFiles() {
       errors.push(`Missing generated file: public/${file}`);
     }
   }
+
+  if (!fs.existsSync(sourcePostsDir)) return;
+  const sourcePosts = walkFiles(sourcePostsDir).filter(file => file.endsWith('.md'));
+  for (const file of sourcePosts) {
+    const parsed = parseFrontMatter(fs.readFileSync(file, 'utf8'));
+    const slug = String(parsed.data.slug || path.basename(file, '.md')).trim();
+    const expected = parsed.data.permalink
+      ? normalizePublicPath(String(parsed.data.permalink))
+      : `posts/${slug}/index.html`;
+    if (!fs.existsSync(path.join(publicDir, expected))) {
+      errors.push(`Missing generated post for ${toPosix(path.relative(projectRoot, file))}: public/${expected}`);
+    }
+  }
+}
+
+function checkSitemapTargets() {
+  const sitemapFile = path.join(publicDir, 'sitemap.xml');
+  if (!fs.existsSync(sitemapFile)) return;
+
+  const siteUrl = String(siteConfig.url || '').trim();
+  if (!siteUrl) {
+    errors.push('_config.yml: missing site url; cannot validate sitemap targets');
+    return;
+  }
+
+  const origin = new URL(siteUrl).origin;
+  const xml = fs.readFileSync(sitemapFile, 'utf8');
+  const locations = [...xml.matchAll(/<loc>([\s\S]*?)<\/loc>/g)].map(match => decodeXml(match[1].trim()));
+  const seen = new Set();
+
+  for (const location of locations) {
+    let url;
+    try {
+      url = new URL(location, siteUrl);
+    } catch (_) {
+      errors.push(`public/sitemap.xml: invalid URL: ${location}`);
+      continue;
+    }
+    if (url.origin !== origin) continue;
+
+    const publicPath = normalizePublicPath(decodeURIComponent(url.pathname));
+    if (seen.has(publicPath)) {
+      errors.push(`public/sitemap.xml: duplicate local target: ${location}`);
+      continue;
+    }
+    seen.add(publicPath);
+
+    if (!fs.existsSync(path.join(publicDir, publicPath))) {
+      errors.push(`public/sitemap.xml: target does not exist: ${location} -> public/${publicPath}`);
+    }
+  }
+}
+
+function normalizePublicPath(value) {
+  let normalized = String(value || '').replace(/^\/+/, '');
+  if (!normalized || normalized.endsWith('/')) normalized += 'index.html';
+  return normalized;
+}
+
+function decodeXml(value) {
+  return value
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
 }
 
 function scanPublicFiles() {
@@ -178,6 +245,16 @@ function walkFiles(root) {
 function readJson(file, fallback) {
   if (!fs.existsSync(file)) return fallback;
   return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+function readYaml(file, fallback) {
+  if (!fs.existsSync(file)) return fallback;
+  try {
+    const data = yaml.load(fs.readFileSync(file, 'utf8')) || {};
+    return typeof data === 'object' && !Array.isArray(data) ? data : fallback;
+  } catch (_) {
+    return fallback;
+  }
 }
 
 function resolveFrom(base, value) {

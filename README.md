@@ -46,6 +46,10 @@ npm run publish:local
 
 # 仅构建
 npm run build
+
+# 脚本语法与同步流程测试
+npm run check:syntax
+npm test
 ```
 
 ## 项目结构
@@ -60,13 +64,16 @@ npm run build
 | `scaffolds/life.md` | 生活随笔模板 |
 | `scaffolds/tech.md` | 技术文章模板 |
 | `obsidian-blog.config.json` | Obsidian 博客同步配置 |
+| `obsidian-blog.manifest.json` | 已生成文章和图片清单，用于安全清理取消发布内容 |
 | `blog-slug-dictionary.json` | 自动生成 slug 的中文技术词典 |
 | `tools/sync-obsidian-blogs.js` | Obsidian `Blogs/` 到 Hexo 的同步脚本 |
 | `tools/blog-doctor.js` | 发布前最终验收脚本 |
+| `tools/font-subsets.js` | 根据站点文本生成霞鹜文楷常规体、粗体子集 |
 | `scripts/theme-patch.js` | 构建时覆盖 A4 主题模板、清理无用主题产物 |
+| `scripts/font-subsets.js` | 构建时用字体子集替换主题的完整字体 |
 | `scripts/poem-shards.js` | 构建时把诗词库拆成 10 片（`/data/poems/0-9.json`） |
 | `source/css/custom.css` | 自定义 CSS（字体、代码块等） |
-| `source/data/poems.json` | 首页本地诗词库源数据（1000 条，构建时分片，不直接发布） |
+| `resources/poems.json` | 首页本地诗词库源数据（1000 条，构建时分片，不直接发布） |
 | `source/js/randomPoem.js` | 首页随机诗词加载逻辑（随机取一个分片，约 15K） |
 | `source/js/toc.js` | 文章左侧目录（原生 JS，覆盖主题的 jQuery/tocify 实现） |
 | `source/js/returnToTop.js` | 回到顶部按钮（原生 JS 覆盖版） |
@@ -84,12 +91,12 @@ npm run publish:local
 
 这会在本地构建并 rsync 到 `../Mau-Q.github.io/`，然后手动 git commit + push。
 
-### 方式二：GitHub Actions（需配置）
+### 方式二：GitHub Actions（当前推荐）
 
 1. 将本项目 push 到 GitHub 新仓库（如 `Mau-Q/blog-source`）
 2. 在 GitHub 创建 [Personal Access Token](https://github.com/settings/tokens)（勾选 `repo` 权限）
 3. 在源码仓库 Settings → Secrets 中添加 `DEPLOY_TOKEN`，值为上一步的 token
-4. 之后每次 push 源码，GitHub Actions 自动构建并部署到 `Mau-Q.github.io`
+4. 之后每次 push 源码，GitHub Actions 会先运行语法检查、测试、构建和 doctor，再部署到 `Mau-Q.github.io`
 
 ## 已知事项
 
@@ -111,6 +118,7 @@ npm run publish:local
   - `[[内部链接]]` 会优先转成已发布文章链接；找不到对应发布文章时，只保留显示文字。
   - 日常推荐流程：先运行 `npm run blog:check` 预览，再运行 `npm run blog:ready` 准备发布。
   - `npm run blog:doctor` 会检查生成产物、远程外链、未处理的 Obsidian 语法、本地路径和常见隐私/草稿词。
+  - 同步清单只管理由该工具生成的文章和图片；文章取消 `ready` 后，相应生成文件会在下一次同步时安全移除。
   - `npm run blog:ready` 不会自动 commit 或 push，确认本地效果后再手动发布。
 
 - `scripts/theme-patch.js` 会在 Hexo 生成前用 `layout-overrides/` 覆盖 A4 主题模板：
@@ -122,6 +130,7 @@ npm run publish:local
 - 站点已完全去 jQuery：`source/js/toc.js`、`returnToTop.js`、`returnToLastPage.js` 是对主题同名文件的原生 JS 覆盖；升级主题后需确认这三个文件的行为仍与主题版本等价。
 - 暗黑模式的 `darkreader.min.js`（88K）按需加载：浅色模式用户不会下载；跟随系统或手动切换到暗色时才加载。
 - 首页诗词库在构建时由 `scripts/poem-shards.js` 拆成 10 片，首页每次只请求一片；分片数量改动时需同步修改 `source/js/randomPoem.js` 中的 `SHARD_COUNT`。
-- `_config.yml` 的 `updated_option: mtime` 依赖文件修改时间：GitHub Actions 部署已在 workflow 中用 `git restore-mtime` 还原提交时间；本地 `publish:local` 不受影响。
-- 字体使用本地霞鹜文楷 Lite 版，覆盖常用汉字，少数生僻字会回退到系统字体。
+- `_config.yml` 使用 `updated_option: date` 保证不同机器构建结果一致；需要显示修改日期时，在文章 front matter 中显式填写 `updated`。
+- 字体仍使用本地霞鹜文楷 Lite 常规体和粗体，但构建时会扫描页面、文章、配置及完整诗词库并自动生成子集；新文章中的新字符会在下一次构建自动加入。
+- 无图片画廊时不会发布或加载 LightGallery；评论关闭时不会发布 Waline 资源。
 - 首页诗词数据来自 [chinese-poetry](https://github.com/chinese-poetry/chinese-poetry)，运行时只读取本地分片数据，不调用远程接口。

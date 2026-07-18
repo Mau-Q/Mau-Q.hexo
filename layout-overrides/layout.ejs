@@ -55,6 +55,9 @@
             window.addEventListener('DOMContentLoaded', () => {
                 const btn = document.createElement('button');
                 btn.innerText = '🌓';
+                btn.type = 'button';
+                btn.setAttribute('aria-label', '切换深色模式');
+                btn.title = '切换深色模式';
                 // 按钮样式：仿照你之前的布局，放在右下角
                 btn.style.cssText = `
                     position: fixed; 

@@ -2,35 +2,36 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Restore file modification times
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q git-restore-mtime
-          git restore-mtime
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate static files
-        run: npm run build
+      - name: Check syntax and workflow tests
+        run: npm run check:syntax && npm test
+
+      - name: Generate and validate static files
+        run: |
+          npm run build
+          npm run blog:doctor
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -39,5 +40,4 @@ jobs:
           external_repository: Mau-Q/Mau-Q.github.io
           publish_branch: master
           publish_dir: ./public
-          force_orphan: true
           commit_message: 'deploy: ${{ github.event.head_commit.message }}'
