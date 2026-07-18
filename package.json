@@ -4,6 +4,14 @@
   "private": true,
   "scripts": {
     "build": "hexo generate",
+    "blog:sync": "node tools/sync-obsidian-blogs.js",
+    "blog:sync:check": "node tools/sync-obsidian-blogs.js --dry-run",
+    "blog:slug:check": "node tools/sync-obsidian-blogs.js --slug-check",
+    "blog:slug:fix": "node tools/sync-obsidian-blogs.js --slug-fix",
+    "blog:doctor": "node tools/blog-doctor.js",
+    "blog:check": "npm run blog:slug:check && npm run blog:sync:check && npm run blog:doctor",
+    "blog:build": "npm run blog:sync && npm run build",
+    "blog:ready": "npm run blog:slug:fix && npm run blog:sync && npm run build && npm run blog:doctor",
     "clean": "hexo clean",
     "deploy": "hexo deploy",
     "server": "hexo server",
@@ -26,6 +34,7 @@
     "hexo-renderer-marked": "^7.0.0",
     "hexo-renderer-stylus": "^3.0.1",
     "hexo-server": "^3.0.0",
-    "hexo-theme-a4": "^2.0.1"
+    "hexo-theme-a4": "^2.0.1",
+    "js-yaml": "^4.1.0"
   }
 }

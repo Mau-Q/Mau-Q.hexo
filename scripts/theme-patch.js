@@ -6,7 +6,7 @@
  * Patches applied:
  *  - head.ejs:     remove CDN Chinese font CSS link (use local @font-face instead)
  *  - layout.ejs:   use local /js/darkreader.min.js instead of jsdelivr CDN
- *  - footer.ejs:   use local /js/jquery-*.min.js instead of cdnjs CDN
+ *  - footer.ejs:   use local jQuery and the local 1,000-line poetry library
  */
 'use strict';
 
