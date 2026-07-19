@@ -5,6 +5,7 @@
  *
  * Patches applied:
  *  - head.ejs:     remove CDN Chinese font CSS link (use local @font-face instead)
+ *  - font.ejs:     render a valid local Chinese font stack
  *  - layout.ejs:   use local /js/darkreader.min.js instead of jsdelivr CDN
  *  - footer.ejs:   use native JS, local poetry shards and conditional galleries
  *  - post.ejs:     render article afterwords without modifying article content
@@ -20,6 +21,7 @@ const OVERRIDES = [
   'layout.ejs',
   '_partial/head.ejs',
   '_partial/footer.ejs',
+  '_partial/configcss/font.ejs',
 ];
 
 hexo.on('generateBefore', function () {
