@@ -18,7 +18,7 @@
     "deploy": "hexo deploy",
     "server": "hexo server",
     "preview": "hexo server",
-    "publish:local": "npm run clean && npm run build && npm run blog:doctor && rsync -av --delete --exclude='.git/' --exclude='.gitignore' --exclude='.DS_Store' public/ ../Mau-Q.github.io/"
+    "publish:local": "npm run clean && npm run build && npm run blog:doctor && rsync -av --delete --exclude='.git/' --exclude='.gitignore' --exclude='.DS_Store' --exclude='.nojekyll' public/ ../Mau-Q.github.io/"
   },
   "hexo": {
     "version": "8.1.2"
