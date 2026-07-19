@@ -68,7 +68,7 @@ pre code {
     margin: 2.8rem auto 0.5rem;
     padding: 1rem 1.2rem 0.9rem;
     max-width: 34rem;
-    border-top: 1px solid rgba(79, 125, 222, 0.28);
+    border-top: 1px solid rgba(63, 107, 91, 0.28);
     text-align: center;
 }
 
@@ -95,7 +95,7 @@ pre code {
 }
 
 #targetSpan[data-solar-term] {
-    color: #5f6f8f;
+    color: #3f6b5b;
 }
 
 /* Mobile: ensure code blocks don't overflow */

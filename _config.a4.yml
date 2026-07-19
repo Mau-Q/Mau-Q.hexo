@@ -110,15 +110,15 @@ cdn:
 # 注：颜色代码需加“#”，颜色单词不需要加“#”
 # 更多A4色调搭配推荐：https://ninojay.top/hexoplugin/A4-color-change/
 color:
-  enable: false # true | false
-  font: "#9e5345" # 字体颜色
-  background: "#e8e0c9" # 最底部层背景颜色
-  indexBackGround: "#efeae2" # 首页层颜色
-  postBackGround: "#efeae2" # 文章页层颜色
-  codeBackGround: "#e8e0c9" # 代码块背景颜色
-  codeFont: "#2e5041" # 代码块字体颜色
-  linkBeforeClick: "#2e5041" # 链接点击前的颜色
-  linkAfterClick: "#9c9caf" # 链接点击后的颜色
+  enable: true # true | false
+  font: "#34443f" # 青黛墨色
+  background: "#dce2dc" # 外层淡青灰
+  indexBackGround: "#f6f3e9" # 首页宣纸色
+  postBackGround: "#f6f3e9" # 文章页宣纸色
+  codeBackGround: "#e7ebe5" # 代码块浅青灰
+  codeFont: "#2f4a40" # 代码墨绿
+  linkBeforeClick: "#3f6b5b" # 青黛链接色
+  linkAfterClick: "#756b82" # 访问后灰紫
 
 # A4背景引入图片
 # 图片你应该先放到 source下，下面选项的图片路径 即为 相对于 source 目录的路径
