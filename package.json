@@ -5,7 +5,7 @@
   "scripts": {
     "build": "hexo generate",
     "test": "node --test tests/*.test.js",
-    "check:syntax": "node --check tools/sync-obsidian-blogs.js && node --check tools/blog-doctor.js && node --check tools/font-subsets.js && node --check scripts/font-subsets.js && node --check scripts/poem-shards.js && node --check scripts/theme-patch.js",
+    "check:syntax": "node --check tools/sync-obsidian-blogs.js && node --check tools/blog-doctor.js && node --check tools/font-subsets.js && node --check tools/seasonal-poems.js && node --check tools/post-afterword.js && node --check scripts/font-subsets.js && node --check scripts/poem-shards.js && node --check scripts/seasonal-poems.js && node --check scripts/post-afterword.js && node --check scripts/theme-patch.js && node --check source/js/randomPoem.js",
     "blog:sync": "node tools/sync-obsidian-blogs.js",
     "blog:sync:check": "node tools/sync-obsidian-blogs.js --dry-run",
     "blog:slug:check": "node tools/sync-obsidian-blogs.js --slug-check",
@@ -40,6 +40,7 @@
     "js-yaml": "^4.3.0"
   },
   "devDependencies": {
+    "lunar-javascript": "^1.7.7",
     "subset-font": "^2.5.0"
   }
 }

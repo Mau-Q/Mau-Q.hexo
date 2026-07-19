@@ -69,9 +69,13 @@ npm test
 | `tools/sync-obsidian-blogs.js` | Obsidian `Blogs/` 到 Hexo 的同步脚本 |
 | `tools/blog-doctor.js` | 发布前最终验收脚本 |
 | `tools/font-subsets.js` | 根据站点文本生成霞鹜文楷常规体、粗体子集 |
+| `tools/seasonal-poems.js` | 生成 2020—2100 年二十四节气日期表 |
+| `tools/post-afterword.js` | 按文章分类、标签稳定选择文章余韵 |
 | `scripts/theme-patch.js` | 构建时覆盖 A4 主题模板、清理无用主题产物 |
 | `scripts/font-subsets.js` | 构建时用字体子集替换主题的完整字体 |
 | `scripts/poem-shards.js` | 构建时把诗词库拆成 10 片（`/data/poems/0-9.json`） |
+| `resources/seasonal-poems.json` | 二十四节气当天使用的诗句 |
+| `resources/post-afterwords.json` | 文章余韵的分类、标签规则与诗句 |
 | `source/css/custom.css` | 自定义 CSS（字体、代码块等） |
 | `resources/poems.json` | 首页本地诗词库源数据（1000 条，构建时分片，不直接发布） |
 | `source/js/randomPoem.js` | 首页随机诗词加载逻辑（随机取一个分片，约 15K） |
@@ -130,6 +134,8 @@ npm run publish:local
 - 站点已完全去 jQuery：`source/js/toc.js`、`returnToTop.js`、`returnToLastPage.js` 是对主题同名文件的原生 JS 覆盖；升级主题后需确认这三个文件的行为仍与主题版本等价。
 - 暗黑模式的 `darkreader.min.js`（88K）按需加载：浅色模式用户不会下载；跟随系统或手动切换到暗色时才加载。
 - 首页诗词库在构建时由 `scripts/poem-shards.js` 拆成 10 片，首页每次只请求一片；分片数量改动时需同步修改 `source/js/randomPoem.js` 中的 `SHARD_COUNT`。
+- 首页平时继续从本地诗词库随机取句；二十四节气当天会按北京时间自动替换为 `resources/seasonal-poems.json` 中的对应诗句。
+- 每篇文章末尾会按分类和标签从 `resources/post-afterwords.json` 选择固定的“文章余韵”；front matter 可用 `afterword: false` 关闭，或用 `afterword: 自定义诗句` 覆盖。
 - `_config.yml` 使用 `updated_option: date` 保证不同机器构建结果一致；需要显示修改日期时，在文章 front matter 中显式填写 `updated`。
 - 字体仍使用本地霞鹜文楷 Lite 常规体和粗体，但构建时会扫描页面、文章、配置及完整诗词库并自动生成子集；新文章中的新字符会在下一次构建自动加入。
 - 无图片画廊时不会发布或加载 LightGallery；评论关闭时不会发布 Waline 资源。

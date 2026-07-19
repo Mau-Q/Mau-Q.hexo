@@ -7,6 +7,7 @@
  *  - head.ejs:     remove CDN Chinese font CSS link (use local @font-face instead)
  *  - layout.ejs:   use local /js/darkreader.min.js instead of jsdelivr CDN
  *  - footer.ejs:   use native JS, local poetry shards and conditional galleries
+ *  - post.ejs:     render article afterwords without modifying article content
  */
 'use strict';
 
@@ -32,6 +33,19 @@ hexo.on('generateBefore', function () {
     hexo.theme.setView(view, content);
     hexo.log.info('theme-patch: overrode %s', view);
   });
+
+  const themePostFile = path.join(hexo.theme_dir, 'layout', 'post.ejs');
+  const postContent = fs.readFileSync(themePostFile, 'utf8');
+  const contentMarker = '        <%- page.content %>';
+  if (!postContent.includes(contentMarker)) {
+    throw new Error(`theme-patch: unable to find post content marker in ${themePostFile}`);
+  }
+  const patchedPost = postContent.replace(
+    contentMarker,
+    `${contentMarker}\n        <%- post_afterword(page) %>`
+  );
+  hexo.theme.setView('post.ejs', patchedPost);
+  hexo.log.info('theme-patch: augmented post.ejs with article afterwords');
 });
 
 // Drop theme assets that this site does not use. This keeps both the deployed

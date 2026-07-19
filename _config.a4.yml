@@ -28,7 +28,7 @@ showInMenu:  # menu 中的哪些页面显示在首页中（“首页”必定显
 index:  # 首页相关配置
   header:  # 首页的页眉 以及 404页面，当你没开启一言，将会每次刷新页面随机展示下面的语句
     - "行到水穷处，坐看云起时。"
-    # 完整诗词库位于 source/data/poems.json，此处仅作加载失败时的兜底。
+    # 完整诗词库位于 resources/poems.json，此处仅作加载失败时的兜底。
   hitokoto: false # 一言：调用网络语句展示的接口
   footer: Mau-Q # 除了可以填写任何文字外，可以自动邮箱链接化，但需按照这个格式填写：Email:xxx@gmail.com
   titlePosition: left # center | left  # 首页标题的位置

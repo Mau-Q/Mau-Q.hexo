@@ -11,6 +11,8 @@ const repoRoot = path.resolve(__dirname, '..');
 const syncScript = path.join(repoRoot, 'tools', 'sync-obsidian-blogs.js');
 const doctorScript = path.join(repoRoot, 'tools', 'blog-doctor.js');
 const { collectSubsetText } = require('../tools/font-subsets');
+const { buildSeasonalPoemPayload, buildSolarTermCalendar } = require('../tools/seasonal-poems');
+const { loadAfterwordConfig, renderAfterword, selectAfterword } = require('../tools/post-afterword');
 
 test('sync removes stale generated posts and assets when a note is unpublished', () => {
   const fixture = makeFixture();
@@ -83,6 +85,38 @@ test('font subset corpus includes publishable pages and poetry resources', () =>
   const text = collectSubsetText(fixture.root);
   assert.match(text, /风格保留/);
   assert.match(text, /龘诗/);
+});
+
+test('solar-term calendar matches the official 2026 term dates', () => {
+  const calendar = buildSolarTermCalendar(2026, 2026);
+  assert.deepEqual(calendar['2026'], [
+    '01-05', '01-20', '02-04', '02-18', '03-05', '03-20',
+    '04-05', '04-20', '05-05', '05-21', '06-05', '06-21',
+    '07-07', '07-23', '08-07', '08-23', '09-07', '09-23',
+    '10-08', '10-23', '11-07', '11-22', '12-07', '12-22'
+  ]);
+
+  const payload = buildSeasonalPoemPayload({ projectRoot: repoRoot, startYear: 2026, endYear: 2026 });
+  assert.equal(payload.poems.length, 24);
+  assert.equal(payload.poems[13].term, '大暑');
+  assert.equal(payload.years['2026'][13], '07-23');
+});
+
+test('post afterword follows categories and supports explicit opt-out', () => {
+  const config = loadAfterwordConfig(repoRoot);
+  const data = {
+    title: '数据结构复习',
+    path: 'posts/data-structures/',
+    categories: ['学习'],
+    tags: ['算法']
+  };
+  const first = selectAfterword(data, config);
+  const second = selectAfterword(data, config);
+
+  assert.deepEqual(first, second, 'the same post should keep the same afterword');
+  assert.ok(config.rules[1].poems.some(poem => poem.text === first.text));
+  assert.equal(selectAfterword({ ...data, afterword: false }, config), null);
+  assert.match(renderAfterword({ text: '<诗句>', author: '作者', title: '篇名' }), /&lt;诗句&gt;/);
 });
 
 function makeFixture() {
