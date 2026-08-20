@@ -1,0 +1,57 @@
+<%
+    var experience = theme.experience || {};
+    var listConfig = experience.list || {};
+    var excerptLength = Math.max(48, Number(listConfig.excerptLength || 96));
+    var visiblePosts = site.posts.data
+        .filter(function (post) { return !post.hide; })
+        .slice()
+        .sort(function (a, b) { return b.date - a.date; });
+    var postsByYear = new Map();
+    visiblePosts.forEach(function (post) {
+        var year = date(post.date, 'YYYY');
+        if (!postsByYear.has(year)) postsByYear.set(year, []);
+        postsByYear.get(year).push(post);
+    });
+
+    function postExcerpt(post) {
+        var raw = post.description || post.excerpt || post.content || '';
+        var plain = strip_html(raw).replace(/\s+/g, ' ').trim();
+        return plain.length > excerptLength ? plain.slice(0, excerptLength).trim() + '…' : plain;
+    }
+%>
+
+<section class="post-library" aria-labelledby="post-library-title" data-pagefind-ignore>
+    <header class="library-heading">
+        <p class="home-eyebrow">Archive</p>
+        <h1 id="post-library-title">全部文章</h1>
+        <p>共 <%= visiblePosts.length %> 篇，按发布时间由近到远排列。</p>
+    </header>
+
+    <% postsByYear.forEach(function (posts, year) { %>
+        <section class="archive-year" aria-labelledby="archive-year-<%= year %>">
+            <h2 id="archive-year-<%= year %>"><%= year %><span><%= posts.length %> 篇</span></h2>
+            <div class="article-card-list">
+                <% posts.forEach(function (post) { %>
+                    <article class="article-card">
+                        <div class="article-card-meta">
+                            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'MM 月 DD 日') %></time>
+                            <% if(post.categories && post.categories.length) { %>
+                                <a href="<%- url_for(post.categories.data[0].path) %>"><%= post.categories.data[0].name %></a>
+                            <% } %>
+                        </div>
+                        <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
+                        <% var excerpt = postExcerpt(post); %>
+                        <% if(excerpt) { %><p><%= excerpt %></p><% } %>
+                        <% if(post.tags && post.tags.length) { %>
+                            <ul class="article-tags" aria-label="文章标签">
+                                <% post.tags.data.forEach(function (tag) { %>
+                                    <li><a href="<%- url_for(tag.path) %>">#<%= tag.name %></a></li>
+                                <% }); %>
+                            </ul>
+                        <% } %>
+                    </article>
+                <% }); %>
+            </div>
+        </section>
+    <% }); %>
+</section>

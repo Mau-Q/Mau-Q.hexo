@@ -7,8 +7,10 @@
  *  - head.ejs:     remove CDN Chinese font CSS link (use local @font-face instead)
  *  - font.ejs:     render a valid local Chinese font stack
  *  - layout.ejs:   use local /js/darkreader.min.js instead of jsdelivr CDN
+ *  - header views: add semantic navigation and an accessible homepage hierarchy
+ *  - index/list:   render scannable homepage and archive cards
  *  - footer.ejs:   use native JS, local poetry shards and conditional galleries
- *  - post.ejs:     render article afterwords without modifying article content
+ *  - post.ejs:     render semantic titles, Pagefind content and article afterwords
  */
 'use strict';
 
@@ -19,7 +21,11 @@ const OVERRIDES_DIR = path.join(__dirname, '..', 'layout-overrides');
 
 const OVERRIDES = [
   'layout.ejs',
+  'index.ejs',
+  'list.ejs',
   '_partial/head.ejs',
+  '_partial/header.ejs',
+  '_partial/post-header.ejs',
   '_partial/footer.ejs',
   '_partial/configcss/font.ejs',
 ];
@@ -37,14 +43,47 @@ hexo.on('generateBefore', function () {
   });
 
   const themePostFile = path.join(hexo.theme_dir, 'layout', 'post.ejs');
-  const postContent = fs.readFileSync(themePostFile, 'utf8');
+  let postContent = fs.readFileSync(themePostFile, 'utf8');
+  const leftTitle = [
+    '                <div class="post-main-title">',
+    '                    <%= page.title %>',
+    '                </div>'
+  ].join('\n');
+  const centeredTitle = [
+    '                <div class="post-main-title" style="text-align: center;">',
+    '                    <%= page.title %>',
+    '                </div>'
+  ].join('\n');
+  const leftTitleCount = postContent.split(leftTitle).length - 1;
+  const centeredTitleCount = postContent.split(centeredTitle).length - 1;
+  if (leftTitleCount !== 2 || centeredTitleCount !== 2) {
+    throw new Error(
+      `theme-patch: unexpected post title template shape in ${themePostFile} ` +
+      `(left=${leftTitleCount}, centered=${centeredTitleCount})`
+    );
+  }
+  postContent = postContent
+    .split(leftTitle)
+    .join(leftTitle.replace('<div ', '<h1 ').replace('</div>', '</h1>'))
+    .split(centeredTitle)
+    .join(centeredTitle.replace('<div ', '<h1 ').replace('</div>', '</h1>'));
+
+  const postBodyMarker = '    <div class="post-md">';
+  if (!postContent.includes(postBodyMarker)) {
+    throw new Error(`theme-patch: unable to find post body marker in ${themePostFile}`);
+  }
+  postContent = postContent.replace(
+    postBodyMarker,
+    '    <div class="post-md"<% if(is_post()) { %> data-pagefind-body<% } %>>'
+  );
+
   const contentMarker = '        <%- page.content %>';
   if (!postContent.includes(contentMarker)) {
     throw new Error(`theme-patch: unable to find post content marker in ${themePostFile}`);
   }
   const patchedPost = postContent.replace(
     contentMarker,
-    `${contentMarker}\n        <%- post_afterword(page) %>`
+    `${contentMarker}\n        <% if(is_post()) { %><%- post_afterword(page) %><% } %>`
   );
   hexo.theme.setView('post.ejs', patchedPost);
   hexo.log.info('theme-patch: augmented post.ejs with article afterwords');

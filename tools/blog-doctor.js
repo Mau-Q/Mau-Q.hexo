@@ -17,7 +17,13 @@ const obsidianBlogsDir = process.env.OBSIDIAN_BLOGS_DIR || resolveFrom(obsidianV
 const expectedPublicFiles = [
   'sitemap.xml',
   'atom.xml',
-  'robots.txt'
+  'robots.txt',
+  'search/index.html',
+  'pagefind/pagefind.js',
+  'pagefind/pagefind-component-ui.js',
+  'pagefind/pagefind-component-ui.css',
+  'pagefind/pagefind-highlight.js',
+  'img/og/site.png'
 ];
 
 const externalPatterns = [
@@ -95,8 +101,39 @@ function checkExpectedPublicFiles() {
       : `posts/${slug}/index.html`;
     if (!fs.existsSync(path.join(publicDir, expected))) {
       errors.push(`Missing generated post for ${toPosix(path.relative(projectRoot, file))}: public/${expected}`);
+      continue;
+    }
+
+    const generatedHtml = fs.readFileSync(path.join(publicDir, expected), 'utf8');
+    if (!/data-pagefind-body(?:\s|>)/.test(generatedHtml)) {
+      errors.push(`Generated post is missing Pagefind content boundary: public/${expected}`);
+    }
+    if (!/<meta\b[^>]*property=["']og:image["']/i.test(generatedHtml)) {
+      errors.push(`Generated post is missing an Open Graph image: public/${expected}`);
+    }
+
+    const ogKey = safeOgKey(expected);
+    const expectedOg = `img/og/${ogKey}.png`;
+    if (!fs.existsSync(path.join(publicDir, expectedOg))) {
+      errors.push(`Missing generated Open Graph card for public/${expected}: public/${expectedOg}`);
     }
   }
+
+  const searchFile = path.join(publicDir, 'search', 'index.html');
+  if (fs.existsSync(searchFile)) {
+    const searchHtml = fs.readFileSync(searchFile, 'utf8');
+    if (!searchHtml.includes('<pagefind-input')) {
+      errors.push('public/search/index.html: missing Pagefind search input');
+    }
+  }
+}
+
+function safeOgKey(routePath) {
+  return String(routePath || '')
+    .replace(/index\.html$/, '')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/[\\/]+/g, '--')
+    .replace(/[^A-Za-z0-9._-]/g, '-') || 'site';
 }
 
 function checkSitemapTargets() {
@@ -169,6 +206,9 @@ function scanPublicFiles() {
       }
       if (file.endsWith('.html') && /\[\[[^\]]+\]\]/.test(line)) {
         errors.push(`${rel}:${i + 1}: unresolved Obsidian wikilink in generated output`);
+      }
+      if (file.endsWith('.html') && /class=["'][^"']*\bheaderlink\b[^"']*["'](?![^>]*aria-hidden=)/.test(line)) {
+        errors.push(`${rel}:${i + 1}: heading permalink is exposed as a duplicate accessible name`);
       }
       if (/(file:\/\/|\/Users\/rui\/)/.test(line)) {
         errors.push(`${rel}:${i + 1}: local filesystem path in generated output`);

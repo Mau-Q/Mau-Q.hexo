@@ -1,23 +1,73 @@
 <head>
     <%
+        var experience = theme.experience || {};
+        var searchConfig = experience.search || {};
         var rawDescription = page.description || page.excerpt || (is_post() ? page.content : '') || config.description || page.title || config.title;
         var pageDescription = strip_html(rawDescription || '').replace(/\s+/g, ' ').trim().slice(0, 160);
         var canonicalPath = path == 'index.html' ? '/' : '/' + path.replace(/index\.html$/, '');
         var canonicalUrl = full_url_for(canonicalPath);
         var hasGallery = is_post() && page.content && /gallery-item/.test(page.content);
+        var ogKey = path
+            .replace(/index\.html$/, '')
+            .replace(/^\/+|\/+$/g, '')
+            .replace(/[\\/]+/g, '--')
+            .replace(/[^A-Za-z0-9._-]/g, '-') || 'site';
+        var ogImagePath = page.og_image || '/img/og/' + ogKey + '.png';
+        var ogImageUrl = full_url_for(ogImagePath);
+        var searchPath = String(searchConfig.path || '/search/').replace(/^\/+|\/+$/g, '');
+        var isSearchPage = path == searchPath + '/index.html';
+        var pageKeywords = config.keywords;
+        if (is_post() && page.tags && page.tags.length) {
+            pageKeywords = page.tags.data.map(function (tag) { return tag.name; }).join(',');
+        }
     %>
     <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport" />
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
+    <meta name="theme-color" content="#f7f5ed" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="hexo-theme-A4" content="<%= theme.version %>" />
-    <link rel="alternate icon" type="image/webp" href="<%- url_for(theme.favicon) %>">
+    <link rel="icon" href="<%- url_for(theme.favicon) %>">
+    <link rel="alternate" type="application/atom+xml" title="<%= config.title %>" href="<%- full_url_for('/atom.xml') %>">
     <link rel="canonical" href="<%- canonicalUrl %>">
     <%- open_graph({
         title: page.title || config.title,
         description: pageDescription,
         url: canonicalUrl,
-        image: full_url_for(theme.favicon)
+        type: is_post() ? 'article' : 'website',
+        image: ogImageUrl,
+        keywords: pageKeywords,
+        twitter_card: 'summary_large_image'
     }) %>
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="<%= page.title ? '《' + page.title + '》分享卡片' : config.title + ' 博客分享卡片' %>">
+    <% if(is_post()) { %>
+        <meta data-pagefind-meta="title" content="<%= page.title %>">
+        <meta data-pagefind-meta="image" content="<%- ogImagePath %>">
+        <script type="application/ld+json"><%- JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: page.title,
+            description: pageDescription,
+            image: ogImageUrl,
+            datePublished: page.date.toISOString(),
+            dateModified: page.updated.toISOString(),
+            author: { '@type': 'Person', name: config.author },
+            publisher: { '@type': 'Person', name: config.author },
+            mainEntityOfPage: canonicalUrl,
+            inLanguage: config.language || 'zh-CN'
+        }).replace(/</g, '\\u003c') %></script>
+    <% } %>
     <title><%= (theme.displayTitleInTab && page.title ? page.title + ' | ' : '') + config.title + (config.subtitle ? ' | ' + config.subtitle : '') %></title>
+
+    <% if(searchConfig.enable && isSearchPage) { %>
+        <link href="<%- url_for('/pagefind/pagefind-component-ui.css') %>" rel="stylesheet">
+        <script src="<%- url_for('/pagefind/pagefind-component-ui.js') %>" type="module"></script>
+    <% } %>
+    <% if(searchConfig.enable) { %>
+        <script src="<%- url_for('/js/pagefind-highlight.js') %>" type="module"></script>
+    <% } %>
 
     <% if(theme.cdn.enable && theme.cdn.choose != "") { %>
         <% if(theme.cdn.choose == "aliyun") { %>

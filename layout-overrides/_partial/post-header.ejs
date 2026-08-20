@@ -1,0 +1,44 @@
+<% if(is_post() && ('words' in page) && page.words != null) { %>
+    <div class="index-header-line" aria-live="polite">
+        <div id="hiddenHeaderContentArray" hidden>
+            <% for(let i = 0; i < page.words.length; i++) { %>
+                <span><%= page.words[i] %></span>
+            <% } %>
+        </div>
+        <span id="targetSpan"></span>
+    </div>
+<% } %>
+
+<header class="header">
+    <div class="header-container">
+        <img
+            alt="<%= config.title %>"
+            class="header-img"
+            src="<%- url_for(theme.favicon) %>"
+            width="56"
+            height="56"
+        />
+        <div class="header-content">
+            <a class="logo" href="<%- url_for('/') %>"><%= config.title %></a>
+            <span class="description"><%= config.description %></span>
+        </div>
+    </div>
+
+    <nav aria-label="主要导航">
+        <ul class="nav">
+            <% for (name in theme.menu) { %>
+                <%
+                    var target = theme.menu[name];
+                    var targetSection = target.replace(/^\//, '').split('/')[0];
+                    var currentSection = path.split('/')[0];
+                    var active = target == '/'
+                        ? path == 'index.html'
+                        : targetSection && targetSection == currentSection;
+                %>
+                <li>
+                    <a href="<%- url_for(target) %>"<% if(active) { %> class="is-active" aria-current="page"<% } %>><%= name %></a>
+                </li>
+            <% } %>
+        </ul>
+    </nav>
+</header>

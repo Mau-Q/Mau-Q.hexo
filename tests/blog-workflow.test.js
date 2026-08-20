@@ -6,11 +6,13 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
+const sharp = require('sharp');
 
 const repoRoot = path.resolve(__dirname, '..');
 const syncScript = path.join(repoRoot, 'tools', 'sync-obsidian-blogs.js');
 const doctorScript = path.join(repoRoot, 'tools', 'blog-doctor.js');
 const { collectSubsetText } = require('../tools/font-subsets');
+const { buildOgImages, plainText, safeOgKey, wrapText } = require('../tools/og-images');
 const { buildSeasonalPoemPayload, buildSolarTermCalendar } = require('../tools/seasonal-poems');
 const { loadAfterwordConfig, renderAfterword, selectAfterword } = require('../tools/post-afterword');
 
@@ -54,8 +56,21 @@ test('doctor derives post outputs and rejects missing local sitemap targets', ()
 
   fs.mkdirSync(path.join(publicDir, 'posts', 'example'), { recursive: true });
   fs.writeFileSync(path.join(postDir, 'example.md'), '---\ntitle: Example\n---\n\nSafe content.\n');
+  fs.mkdirSync(path.join(publicDir, 'search'), { recursive: true });
+  fs.mkdirSync(path.join(publicDir, 'pagefind'), { recursive: true });
+  fs.mkdirSync(path.join(publicDir, 'img', 'og'), { recursive: true });
   fs.writeFileSync(path.join(publicDir, 'index.html'), '<html><body>Home</body></html>');
-  fs.writeFileSync(path.join(publicDir, 'posts', 'example', 'index.html'), '<html><body>Example</body></html>');
+  fs.writeFileSync(
+    path.join(publicDir, 'posts', 'example', 'index.html'),
+    '<html><head><meta property="og:image" content="/img/og/posts--example.png"></head><body><main data-pagefind-body>Example</main></body></html>'
+  );
+  fs.writeFileSync(path.join(publicDir, 'search', 'index.html'), '<html><body><pagefind-input></pagefind-input></body></html>');
+  fs.writeFileSync(path.join(publicDir, 'pagefind', 'pagefind.js'), '');
+  fs.writeFileSync(path.join(publicDir, 'pagefind', 'pagefind-component-ui.js'), '');
+  fs.writeFileSync(path.join(publicDir, 'pagefind', 'pagefind-component-ui.css'), '');
+  fs.writeFileSync(path.join(publicDir, 'pagefind', 'pagefind-highlight.js'), '');
+  fs.writeFileSync(path.join(publicDir, 'img', 'og', 'site.png'), 'fixture');
+  fs.writeFileSync(path.join(publicDir, 'img', 'og', 'posts--example.png'), 'fixture');
   fs.writeFileSync(path.join(publicDir, 'atom.xml'), '<feed></feed>');
   fs.writeFileSync(path.join(publicDir, 'robots.txt'), 'User-agent: *\nAllow: /\n');
   fs.writeFileSync(
@@ -85,6 +100,36 @@ test('font subset corpus includes publishable pages and poetry resources', () =>
   const text = collectSubsetText(fixture.root);
   assert.match(text, /风格保留/);
   assert.match(text, /龘诗/);
+});
+
+test('OG image builder renders deterministic Chinese PNG cards', async () => {
+  const fixture = makeFixture();
+  const result = await buildOgImages({
+    projectRoot: repoRoot,
+    outputDir: path.join(fixture.root, 'og'),
+    site: {
+      title: 'Mau-Q',
+      subtitle: '学习 · 记录 · 成长',
+      description: '计算机学习与项目复盘。',
+      url: 'https://mau-q.github.io'
+    },
+    posts: [{
+      title: '数据库恢复中的 UNDO、REDO 与检查点',
+      path: 'posts/database-recovery/index.html',
+      date: new Date('2026-08-20T12:00:00+08:00'),
+      categories: [{ name: '技术' }],
+      content: '这是一段用于分享卡片的中文摘要。'
+    }]
+  });
+
+  assert.equal(safeOgKey('posts/database-recovery/index.html'), 'posts--database-recovery');
+  assert.equal(plainText('合适 > 优秀与 client-server'), '合适 > 优秀与 client-server');
+  assert.equal(result.cards.length, 2);
+  assert.deepEqual(wrapText('这是一个足够长的中文标题呀', 6, 2), ['这是一个足够', '长的中文标…']);
+  const metadata = await sharp(result.cards[1].outputFile).metadata();
+  assert.equal(metadata.width, 1200);
+  assert.equal(metadata.height, 630);
+  assert.equal(metadata.format, 'png');
 });
 
 test('solar-term calendar matches the official 2026 term dates', () => {

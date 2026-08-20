@@ -1,0 +1,79 @@
+<%
+    var experience = theme.experience || {};
+    var home = experience.home || {};
+    var visiblePosts = site.posts.data
+        .filter(function (post) { return !post.hide; })
+        .slice()
+        .sort(function (a, b) { return b.date - a.date; });
+    var featuredCount = Math.max(0, Number(home.featuredCount || 1));
+    var recentCount = Math.max(1, Number(home.recentCount || 5));
+    var featuredPosts = visiblePosts.filter(function (post) { return post.featured || post.top; });
+    if (!featuredPosts.length) featuredPosts = visiblePosts.slice(0, featuredCount);
+    featuredPosts = featuredPosts.slice(0, featuredCount);
+    var featuredPaths = new Set(featuredPosts.map(function (post) { return post.path; }));
+    var recentPosts = visiblePosts.filter(function (post) { return !featuredPaths.has(post.path); }).slice(0, recentCount);
+
+    function postExcerpt(post, length) {
+        var raw = post.description || post.excerpt || post.content || '';
+        var plain = strip_html(raw).replace(/\s+/g, ' ').trim();
+        return plain.length > length ? plain.slice(0, length).trim() + '…' : plain;
+    }
+%>
+
+<div class="post-main home-content" data-pagefind-ignore>
+    <% var allPages = site.pages.data; %>
+    <% for(var i = 0; i < allPages.length; i++) { %>
+        <% if(allPages[i].path == "index/index.html") { %>
+            <section class="home-introduction" aria-labelledby="home-introduction-title">
+                <h2 id="home-introduction-title">关于这里</h2>
+                <div class="post-md"><%- allPages[i].content %></div>
+            </section>
+        <% break; } %>
+    <% } %>
+
+    <% if(featuredPosts.length) { %>
+        <section class="home-section" aria-labelledby="featured-posts-title">
+            <div class="section-heading">
+                <h2 id="featured-posts-title">精选</h2>
+            </div>
+            <div class="featured-posts">
+                <% featuredPosts.forEach(function (post) { %>
+                    <article class="featured-post-card">
+                        <p class="post-card-meta">
+                            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+                            <% if(post.categories && post.categories.length) { %>
+                                <span aria-hidden="true">·</span>
+                                <a href="<%- url_for(post.categories.data[0].path) %>"><%= post.categories.data[0].name %></a>
+                            <% } %>
+                        </p>
+                        <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
+                        <% var excerpt = postExcerpt(post, 132); %>
+                        <% if(excerpt) { %><p><%= excerpt %></p><% } %>
+                        <a class="read-post-link" href="<%- url_for(post.path) %>" aria-label="阅读《<%= post.title %>》">阅读全文 <span aria-hidden="true">→</span></a>
+                    </article>
+                <% }); %>
+            </div>
+        </section>
+    <% } %>
+
+    <section class="home-section" aria-labelledby="recent-posts-title">
+        <div class="section-heading">
+            <h2 id="recent-posts-title">最近文章</h2>
+            <a href="<%- url_for('/list/') %>">全部文章 <span aria-hidden="true">→</span></a>
+        </div>
+        <% if(recentPosts.length) { %>
+            <ol class="recent-post-list">
+                <% recentPosts.forEach(function (post) { %>
+                    <li>
+                        <article>
+                            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'MM-DD') %></time>
+                            <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
+                        </article>
+                    </li>
+                <% }); %>
+            </ol>
+        <% } else { %>
+            <p>更多文章正在整理中。</p>
+        <% } %>
+    </section>
+</div>

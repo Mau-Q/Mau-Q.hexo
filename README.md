@@ -47,6 +47,9 @@ npm run publish:local
 # 仅构建
 npm run build
 
+# 只为已经生成的 public/ 建立中文全文搜索索引
+npm run search:index
+
 # 脚本语法与同步流程测试
 npm run check:syntax
 npm test
@@ -82,6 +85,11 @@ npm test
 | `source/js/toc.js` | 文章左侧目录（原生 JS，覆盖主题的 jQuery/tocify 实现） |
 | `source/js/returnToTop.js` | 回到顶部按钮（原生 JS 覆盖版） |
 | `source/js/returnToLastPage.js` | 回退按钮（原生 JS 覆盖版） |
+| `source/search/index.md` | Pagefind 站内搜索页面 |
+| `layout-overrides/index.ejs` | 首页“关于、精选、最近文章”信息层级 |
+| `layout-overrides/list.ejs` | 带摘要、分类和标签的文章归档列表 |
+| `tools/og-images.js` | 使用本地霞鹜文楷生成中文 PNG 分享卡片 |
+| `scripts/og-images.js` | 构建时把站点及文章分享卡片注入 Hexo 路由 |
 | `source/robots.txt` | SEO robots 配置 |
 | `.github/workflows/deploy.yml` | 自动部署 |
 
@@ -108,6 +116,15 @@ npm run publish:local
   - 生活随笔使用 `npx hexo new life "文章标题"`，默认分类为 `生活`。
   - 技术文章使用 `npx hexo new tech "english-slug"`，默认分类为 `技术`；如果想要更干净的 URL，建议文件名用英文 slug，再把文章 front matter 的 `title` 改成中文标题。
   - 顶部菜单的 `分类` 页面会自动聚合 `生活`、`技术` 等分类。
+- 搜索、首页和分享体验：
+  - `npm run build` 会在 Hexo 生成完成后运行 Pagefind，为带有 `data-pagefind-body` 的文章正文建立中文分词索引。
+  - `/search/` 使用 Pagefind 的本地 Web Component；查询只在浏览器内完成，不依赖搜索服务。
+  - 从搜索结果进入文章时，`source/js/pagefind-highlight.js` 会按需加载 Pagefind 高亮模块；普通页面不会加载该模块。
+  - 首页自动选择最新一篇文章作为“精选”，其余文章进入“最近文章”；数量在 `_config.a4.yml` 的 `experience.home` 中集中配置。
+  - `/list/` 按年份展示文章日期、分类、摘要和标签，摘要长度由 `experience.list.excerptLength` 控制。
+  - 构建时会在 `.cache/og-images/` 生成 1200×630 PNG，并发布到 `/img/og/`；文章可用 front matter 的 `og_image` 覆盖自动卡片。
+  - 分享卡片使用主题自带的本地霞鹜文楷完整字体渲染，避免 CI/Linux 环境缺少中文字体。
+  - Pagefind 与分享卡片都是构建产物；直接运行 `npm run server` 前若未执行过构建，搜索页不会有可用索引。
 - Obsidian 写作入口为 `/Users/rui/Documents/rui/Blogs`：
   - 只有 `blog: true` 且 `status: ready` 的 Markdown 会被同步。
   - 建议从 `/Users/rui/Documents/rui/Blogs/_template.md` 复制模板开始写。

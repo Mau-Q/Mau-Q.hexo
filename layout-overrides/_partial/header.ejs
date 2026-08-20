@@ -1,0 +1,37 @@
+<%
+    var experience = theme.experience || {};
+    var home = experience.home || {};
+%>
+<header class="home-hero">
+    <% if(theme.index.header != null || theme.index.header == "") { %>
+        <div class="index-header-line" aria-live="polite">
+            <% if(theme.index.hitokoto) { %>
+                <span id="quote"></span>
+                <script src="<%= url_for('/js/hitokoto.js') %>"></script>
+            <% } else { %>
+                <div id="hiddenHeaderContentArray" hidden>
+                    <% for(let i = 0; i < theme.index.header.length; i++) { %>
+                        <span><%= theme.index.header[i] %></span>
+                    <% } %>
+                </div>
+                <span id="targetSpan"></span>
+            <% } %>
+        </div>
+    <% } %>
+
+    <p class="home-eyebrow"><%= home.eyebrow || config.subtitle %></p>
+    <h1 class="index-logo"><a href="<%- url_for('/') %>"><%= config.title %></a></h1>
+    <p class="home-summary"><%= home.summary || config.description %></p>
+
+    <nav class="home-navigation" aria-label="主要导航">
+        <ul>
+            <% for (name in theme.menu) { %>
+                <% if(theme.menu[name] == '/' || theme.showInMenu.includes(name)) { %>
+                    <li>
+                        <a href="<%- url_for(theme.menu[name]) %>"<% if(theme.menu[name] == '/') { %> aria-current="page"<% } %>><%= name %></a>
+                    </li>
+                <% } %>
+            <% } %>
+        </ul>
+    </nav>
+</header>
