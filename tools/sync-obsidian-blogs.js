@@ -21,7 +21,7 @@ const PUBLISHING_RISK_PATTERNS = [
   ['TODO', /\bTODO\b/i],
   ['FIXME', /\bFIXME\b/i],
   ['unfinished draft marker', /待补|待完善|未完成|草稿/],
-  ['password or secret', /密码|password|passwd|secret|token/i],
+  ['password or secret', /密码|password|passwd|secret|token(?!（词元)/i],
   ['account', /账号|账户|account/i],
   ['id card', /身份证/],
   ['phone number', /手机号|电话[:：]?\s*1[3-9]\d{9}|(^|[^\d])1[3-9]\d{9}([^\d]|$)/],
@@ -676,7 +676,10 @@ function imageSizeAttributes(size) {
 function transformWikiLink(inner, publishedMap) {
   const parsed = parseWikiLink(inner);
   const linkedSlug = lookupPublishedSlug(parsed.target, publishedMap);
-  if (linkedSlug) return `[${parsed.display}](/posts/${linkedSlug}/)`;
+  if (linkedSlug) {
+    const anchor = parsed.heading ? '#' + encodeURIComponent(require('hexo-util').slugize(parsed.heading, { transform: 0 })) : '';
+    return `[${parsed.display}](/posts/${linkedSlug}/${anchor})`;
+  }
   return parsed.display;
 }
 
@@ -687,7 +690,7 @@ function parseWikiLink(inner) {
   const heading = targetWithAnchor.includes('#') ? targetWithAnchor.split('#').slice(1).join('#').trim() : '';
   const alias = aliasParts.join('|').trim();
   const display = alias || heading || path.basename(target || targetWithAnchor);
-  return { target, display };
+  return { target, display, heading };
 }
 
 function lookupPublishedSlug(target, publishedMap) {

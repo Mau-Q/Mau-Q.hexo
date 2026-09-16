@@ -89,6 +89,35 @@ test('doctor derives post outputs and rejects missing local sitemap targets', ()
   const passed = runNode(doctorScript, [], fixture.root);
   assert.equal(passed.status, 0, passed.stderr);
   assert.match(passed.stdout, /Doctor passed/);
+
+  const page = path.join(publicDir, 'posts', 'example', 'index.html');
+  fs.appendFileSync(page, '<pre>tensor([[2.0]])</pre><code>[[3.0]]</code>');
+  fs.writeFileSync(path.join(fixture.blogsDir, 'valid.md'), readyNote());
+  assert.equal(runNode(doctorScript, [], fixture.root).status, 0, 'vault embeds and code arrays are valid');
+  fs.appendFileSync(page, '<p>[[Unconverted note]]</p>');
+  assert.match(runNode(doctorScript, [], fixture.root).stderr, /unresolved Obsidian wikilink/);
+});
+
+test('sync preserves Chinese heading links and distinguishes token terminology from credentials', () => {
+  const fixture = makeFixture();
+  const note = path.join(fixture.blogsDir, 'sample.md');
+  fs.writeFileSync(note, readyNote().replace('![[photo.png]]', '[[sample#模型能表示，不等于训练能找到|说明]]\ntoken（词元，即输入单元）'));
+  const result = runNode(syncScript, [], fixture.root);
+  assert.equal(result.status, 0, result.stderr);
+  const output = fs.readFileSync(path.join(fixture.root, 'source/_posts/sample-post.md'), 'utf8');
+  assert.ok(output.includes('/posts/sample-post/#' + encodeURIComponent('模型能表示，不等于训练能找到')));
+  fs.appendFileSync(note, '\napi_token: example-value\n');
+  assert.notEqual(runNode(syncScript, ['--dry-run'], fixture.root).status, 0);
+});
+
+test('math renders subscripts and matrix rows while leaving code literals intact', () => {
+  const { Marked } = require('marked');
+  const markedKatex = require('marked-katex-extension');
+  const parser = new Marked(markedKatex({ nonStandard: true, throwOnError: true }));
+  const html = parser.parse('梯度$x_i$。\n\n$$\n\\begin{pmatrix}1 & 2 \\\\ 3 & 4\\end{pmatrix}\n$$\n\n`$x_i$`');
+  assert.equal((html.match(/class="katex"/g) || []).length, 2);
+  assert.match(html, /<code>\$x_i\$<\/code>/);
+  assert.doesNotMatch(html, /katex-error/);
 });
 
 test('font subset corpus includes publishable pages and poetry resources', () => {

@@ -41,7 +41,7 @@ const contentRiskPatterns = [
   ['TODO', /\bTODO\b/i],
   ['FIXME', /\bFIXME\b/i],
   ['unfinished draft marker', /待补|待完善|未完成|草稿/],
-  ['password or secret', /密码|password|passwd|secret|token/i],
+  ['password or secret', /密码|password|passwd|secret|token(?!（词元)/i],
   ['account', /账号|账户|account/i],
   ['id card', /身份证/],
   ['phone number', /手机号|电话[:：]?\s*1[3-9]\d{9}|(^|[^\d])1[3-9]\d{9}([^\d]|$)/],
@@ -58,7 +58,7 @@ function main() {
   checkSitemapTargets();
   scanPublicFiles();
   scanMarkdownFiles(sourcePostsDir, () => true);
-  scanMarkdownFiles(obsidianBlogsDir, isReadyObsidianBlog);
+  scanMarkdownFiles(obsidianBlogsDir, isReadyObsidianBlog, true);
 
   if (externalReferences.length) {
     console.log(`External references (${externalReferences.length}):`);
@@ -195,7 +195,10 @@ function scanPublicFiles() {
   const files = walkFiles(publicDir).filter(file => /\.(html|css|js)$/i.test(file));
   for (const file of files) {
     const rel = toPosix(path.relative(projectRoot, file));
-    const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
+    const raw = fs.readFileSync(file, 'utf8');
+    const lines = raw.split(/\r?\n/);
+    const proseLines = raw.replace(/<(pre|code)\b[^>]*>[\s\S]*?<\/\1>/gi,
+      block => block.replace(/[^\n]/g, ' ')).split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       for (const [label, regex] of externalPatterns) {
@@ -204,7 +207,7 @@ function scanPublicFiles() {
           externalReferences.push({ file: rel, line: i + 1, label, text: line.trim().slice(0, 140) });
         }
       }
-      if (file.endsWith('.html') && /\[\[[^\]]+\]\]/.test(line)) {
+      if (file.endsWith('.html') && /\[\[[^\]]+\]\]/.test(proseLines[i])) {
         errors.push(`${rel}:${i + 1}: unresolved Obsidian wikilink in generated output`);
       }
       if (file.endsWith('.html') && /class=["'][^"']*\bheaderlink\b[^"']*["'](?![^>]*aria-hidden=)/.test(line)) {
@@ -217,7 +220,7 @@ function scanPublicFiles() {
   }
 }
 
-function scanMarkdownFiles(root, shouldScan) {
+function scanMarkdownFiles(root, shouldScan, isObsidianSource = false) {
   if (!fs.existsSync(root)) return;
   const files = walkFiles(root).filter(file => file.endsWith('.md'));
   for (const file of files) {
@@ -227,6 +230,8 @@ function scanMarkdownFiles(root, shouldScan) {
 
     const rel = toPosix(path.relative(projectRoot, file));
     for (const [label, regex] of contentRiskPatterns) {
+      // Wikilinks and embeds are valid in the vault; inspect the converted posts for leftovers.
+      if (isObsidianSource && label.startsWith('unresolved Obsidian')) continue;
       const match = findPatternOutsideCode(parsed.body, regex);
       if (match) {
         errors.push(`${rel}:${match.line}: ${label}: ${match.text}`);

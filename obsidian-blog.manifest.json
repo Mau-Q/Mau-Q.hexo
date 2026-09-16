@@ -1,7 +1,22 @@
 {
   "version": 1,
   "posts": [
+    "source/_posts/deep-learning-basics.md",
+    "source/_posts/neural-network-training-optimization-generalization.md",
     "source/_posts/post-20260719-01d8e3.md"
   ],
-  "assets": []
+  "assets": [
+    "source/img/blogs/deep-learning-basics/drawing-2026-09-15-22-21-57-excalidraw-2-996835ac.svg",
+    "source/img/blogs/deep-learning-basics/drawing-2026-09-16-14-11-12-excalidraw-e2c5f1e8.svg",
+    "source/img/blogs/deep-learning-basics/excalidraw-92399e10.svg",
+    "source/img/blogs/deep-learning-basics/excalidraw-f1e08b3f.svg",
+    "source/img/blogs/deep-learning-basics/loss-excalidraw-a343f6dc.svg",
+    "source/img/blogs/deep-learning-basics/relu-excalidraw-1e7dcbdb.svg",
+    "source/img/blogs/neural-network-training-optimization-generalization/adam-excalidraw-80865dde.svg",
+    "source/img/blogs/neural-network-training-optimization-generalization/asset-26df11fa.svg",
+    "source/img/blogs/neural-network-training-optimization-generalization/asset-48cb4b88.svg",
+    "source/img/blogs/neural-network-training-optimization-generalization/asset-63c5e20a.svg",
+    "source/img/blogs/neural-network-training-optimization-generalization/cnn-excalidraw-f3a45fbe.svg",
+    "source/img/blogs/neural-network-training-optimization-generalization/excalidraw-90fa71d2.svg"
+  ]
 }
