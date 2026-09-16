@@ -39,7 +39,9 @@
             function enableDark() {
                 document.documentElement.style.backgroundColor = '#1e1e1e';
                 document.documentElement.style.colorScheme = 'dark';
-                return loadDarkReader().then(() => DarkReader.enable(drOptions));
+                return loadDarkReader().then(() => DarkReader.enable(drOptions, {
+                    css: <%- JSON.stringify(code_theme_css()) %>
+                }));
             }
 
             function disableDark() {
