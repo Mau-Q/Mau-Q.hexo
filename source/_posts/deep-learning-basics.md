@@ -11,6 +11,8 @@ tags:
 
 <!-- Generated from Obsidian: Blogs/深度学习基础.md. Edit the source note, then run npm run blog:sync. -->
 
+从一个预测错误的模型开始，算出梯度，更新一次参数，再用代码核对损失的变化。这个例子会逐步扩展到批量训练、神经网络和分类。数学部分用到基础代数和导数，代码使用 Python。
+
 模型预测错了，可以用损失（Loss）衡量预测与真实值的差距。但 Loss 只是一个数，怎样从这个数知道每个参数该改多少？
 
 ![深度学习-机器学习整体流程.excalidraw](/img/blogs/deep-learning-basics/excalidraw-f1e08b3f.svg)
@@ -118,6 +120,8 @@ $$
 
 反向传播（Backpropagation）从 Loss 出发，沿计算图反向应用链式法则，算出各个参数的梯度。有分支时，各条路径的梯度贡献需要相加。这个过程完成后，参数还没变；优化器再按选定的规则，利用梯度更新参数。下面使用的更新规则是梯度下降。
 
+先判断：两个偏导数都是负数，若想让损失下降，$w,b$ 应分别增大还是减小？把判断带入下面的更新式核对。
+
 ### 学习率决定迈多大一步
 
 梯度下降用下面的式子更新参数：
@@ -158,6 +162,78 @@ $$
 
 计算 Loss 还需要真实标签，图中没有单独画出这条输入。
 
+## 用代码核对一次更新
+
+PyTorch 能记录运算并自动计算梯度。这里的张量（tensor）可以理解为按维度组织的数值数组：单个数、向量和矩阵分别对应零维、一维和二维张量。`torch.nn` 是提供网络层和损失函数的模块，`nn` 取自 neural network（神经网络）；代码中的 `nn.Linear` 实现 $wx+b$，`nn.MSELoss` 计算前面的均方误差。
+
+这里使用随机梯度下降（Stochastic Gradient Descent，SGD）优化器；本例只有一个样本，更新就是刚才的梯度下降。代码需要基础 Python 语法，以及已安装 PyTorch 的 Python 环境；若运行时提示找不到 `torch`，先在运行代码所用环境的终端执行 `python -m pip install torch`。
+
+取 $x=2,y=5,w=1,b=0,\eta=0.1$，用 PyTorch 计算同一次更新：
+
+~~~python
+import torch
+from torch import nn
+
+# 形状是 [样本数, 特征数]，这里各为 1。
+x = torch.tensor([[2.0]])
+y = torch.tensor([[5.0]])
+
+model = nn.Linear(1, 1)  # 输入和输出各有 1 个特征：y_hat = wx + b
+with torch.no_grad():     # 手动设定初始参数，不记录这段操作的梯度
+    model.weight.fill_(1.0)
+    model.bias.zero_()
+
+loss_fn = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
+
+model.train()
+optimizer.zero_grad()       # 清除旧梯度
+prediction = model(x)      # 前向传播
+loss = loss_fn(prediction, y)
+loss.backward()            # 反向传播，计算梯度
+
+print(f"更新前 Loss: {loss.item():.4f}")
+print(f"w 的梯度: {model.weight.grad.item():.4f}")
+print(f"b 的梯度: {model.bias.grad.item():.4f}")
+
+optimizer.step()           # 根据梯度更新参数
+
+model.eval()
+with torch.no_grad():
+    new_prediction = model(x)
+    new_loss = loss_fn(new_prediction, y)
+
+print(f"更新后 w: {model.weight.item():.4f}")
+print(f"更新后 b: {model.bias.item():.4f}")
+print(f"更新后 Loss: {new_loss.item():.4f}")
+~~~
+
+按前面的手算，应得到以下输出；浮点数内部可能有微小误差：
+
+~~~text
+更新前 Loss: 9.0000
+w 的梯度: -12.0000
+b 的梯度: -6.0000
+更新后 w: 2.2000
+更新后 b: 0.6000
+更新后 Loss: 0.0000
+~~~
+
+PyTorch 默认会累积梯度，所以每次独立更新前要用 `optimizer.zero_grad()` 清除旧梯度，否则本次算出的梯度会与旧值相加。
+
+更新参数以后，原来的 `loss` 仍然是更新前算出的结果。想知道新参数下的 Loss，需要重新预测、重新计算。
+
+`model.train()` 和 `model.eval()` 分别设置训练模式和评估模式。本例只有线性层，切换模式不改变计算结果；后面会遇到两种模式下行为不同的层。注意，`model.eval()` 不会关闭求导，`torch.no_grad()` 才会关闭这段运算的梯度记录。
+
+这些调用的用法可对照 [PyTorch 官方训练教程](https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial)。
+
+
+### 改一个数，再核对一次
+
+先不运行代码：把学习率改为 `lr=0.3`，预测更新后的参数、预测值和损失。然后从头运行整段代码，与前面手算的 $w=4.6,b=1.8,L=36$ 核对。必须从头运行，让初始参数恢复为 $w=1,b=0$；在上次更新后的参数上再走一步，是另一道题。
+
+能解释为什么损失从 9 升到 36，就完成了这一轮练习。接下来再把一个样本扩展成一批数据。
+
 ## 从一个样本到一批数据
 
 训练集由成对的输入和标签 $(x_i,y_i)$ 组成。每次更新可以使用整份数据，也可以只取其中一部分。
@@ -167,16 +243,16 @@ $$
 | 更新方式 | 每次使用的数据 |
 | --- | --- |
 | 全批量梯度下降 | 整个训练集 |
-| 随机梯度下降（Stochastic Gradient Descent，SGD，狭义） | 随机抽取的一个样本 |
+| 随机梯度下降（SGD，狭义） | 随机抽取的一个样本 |
 | 小批量随机梯度下降 | 一个 mini-batch |
 
 实践中说“用 SGD 训练”，经常也包括小批量的情况。
 
 batch 指一次送入模型的一批数据；batch size（批量大小）是每批的样本数；optimizer step（优化器更新步）是一次参数更新；epoch（训练轮次）是训练集完整遍历一遍。例如有 1000 条样本，batch size 为 100，每个 batch 更新一次，那么一个 epoch 就有 10 次更新，20 个 epoch 共更新 200 次。
 
-样本数不能整除 batch size 时，最后一批通常会小一些，也可以配置为丢弃。使用梯度累积时，则会处理多个 batch 才更新一次参数，所以日志中的 step（步骤）或 iteration（迭代）需要结合代码判断。
+一个 batch 不一定对应一次更新。如果每处理两批才更新一次，就是把两批的梯度累积起来再使用，上例每轮便只有 5 次更新。样本数不能整除批量大小时，还要看是否保留最后一个小批次。
 
-对于可以独立采样的数据，每个 epoch 开始时通常会随机打乱样本顺序（shuffle），让不同轮次的 batch 组成发生变化，减少固定排序对更新过程的影响。打乱的是成对的 $(x_i,y_i)$；时间序列或有状态训练要另外考虑时序，不能直接照搬。
+对可以独立采样的数据，每轮通常会打乱样本顺序，让各批的组成发生变化；输入与标签必须成对移动。依赖时序的数据不能直接照搬这一做法。
 
 不同 batch 的难度和梯度不同，Loss 曲线会有波动。相比某一步是否下降，一段时间内的趋势更有参考价值。
 
@@ -266,38 +342,6 @@ ReLU 对向量的每个分量分别计算。若输入有 $d$ 个特征，隐藏�
 
 多个神经元组合后，可以表示更复杂的分段线性关系，近似很多非线性函数。继续把隐藏层的输出送进下一层，就得到多层神经网络。深度学习通常用这样的网络学习中间表示和参数；这些权重和偏置仍然可以通过反向传播求梯度，再由优化器更新。
 
-## 模型能表示，不等于训练能找到
-
-机器学习基础课件《BasicML》（ML 为 Machine Learning，即机器学习）用投影片页数预测课程时长：线性模型的训练 Loss 约为 71，换成有 100 个隐藏神经元的网络后，训练 Loss 反而约为 80；调整超参数后才降到约 41。
-
-把全部参数记作 $\theta$，训练目标通常写成：
-
-$$
-\theta^*\in\operatorname*{arg\,min}_\theta L_{\mathrm{train}}(\theta)
-$$
-
-$\arg\min$ 表示取得最小值的参数集合；可能有多组最优参数，所以这里用 $\in$。全局最小值（Global Minimum）是在全部允许的参数中比较得到的最低 Loss；局部极小值（Local Minimum）只要求在某组参数附近，没有更低的 Loss。上式写的是全局优化目标，实际训练未必能达到。
-
-如果大模型的候选集合包含小模型的全部函数，且使用相同训练数据和损失，理论上有：
-
-$$
-\inf_{f\in\mathcal F_{\text{large}}}L_{\mathrm{train}}(f)
-\le
-\inf_{f\in\mathcal F_{\text{small}}}L_{\mathrm{train}}(f)
-$$
-
-$\inf$ 表示能达到或无限接近的下界。原来的函数都还在，最好的可能结果就不会更差。但实际训练只得到了某组参数，未必到达这个下界。大模型训练得更差时，需要检查优化过程、实现和比较设置，不能直接归因于表达能力不足。
-
-前面用 $wx+b$ 预测数值的模型属于线性回归。它配合 MSE 时，Loss 关于参数是凸函数：任取两组参数，将它们的损失点用线段相连，沿两组参数之间直线计算出的 Loss 都不高于这条线段。凸函数的局部极小值也是全局最小值。最优参数可能不唯一，例如输入特征存在冗余；学习率不合适时，梯度下降也可能不收敛。
-
-神经网络的 Loss 通常是非凸的。参数初始化就是选择训练开始时的参数值，不同初始值可能让优化走出不同的路径。图中还标出了 Saddle Point（鞍点），其多方向的含义在图后解释：
-
-![Drawing 2026-09-16 14.11.12.excalidraw](/img/blogs/deep-learning-basics/drawing-2026-09-16-14-11-12-excalidraw-e2c5f1e8.svg)
-
-这是一张非凸损失的简化示意图，不是前面线性回归的 MSE 曲线。真实网络有很多参数，Loss 定义在高维参数空间里。
-
-梯度接近 0 可能出现在局部极小值、局部极大值、鞍点或较平坦的区域。鞍点附近，沿某些方向向上，沿另一些方向却能继续向下。深层网络还可能遇到梯度消失或梯度爆炸：梯度在逐层反向传播时变得过小，可能使前面层的参数几乎不更新；变得过大，则可能导致更新不稳定。不同方向上的变化尺度也可能差异很大。初始化、数据顺序、学习率和优化器都会影响训练路径。
-
 ## 训练 Loss 很低之后，还要看什么
 
 假设造一个“记答案”的函数：遇到训练样本就返回记住的标签，其他输入一律返回 0。它在训练集上的 Loss 可以是 0，但换一批数据就可能错得很严重。
@@ -331,70 +375,6 @@ $\inf$ 表示能达到或无限接近的下界。原来的函数都还在，最�
 验证集不直接参与梯度更新，但每次根据验证结果修改模型、特征或超参数，都在利用它选择方案。尝试得足够多，可能选出一个恰好适合这份验证集、对新数据却没有同样优势的模型。
 
 因此，测试集要留到模型和设置确定后再用。如果看完测试结果又继续调参，这份测试集也参与了模型选择，后续就需要新的独立数据评估。
-
-## 用代码核对一次更新
-
-PyTorch 是用于张量计算和神经网络训练的框架，使用 Python（一种通用编程语言）编写程序，能记录运算并自动计算梯度。这里的张量（tensor）可以理解为按维度组织的数值数组，单个数、向量和矩阵分别对应零维、一维和二维张量。代码中的 `torch` 是框架的导入名，`nn` 取自 neural network（神经网络），是提供网络层和损失函数的模块；`nn.Linear` 是线性层，`nn.MSELoss` 是前面介绍的均方误差损失。
-
-取 $x=2,y=5,w=1,b=0,\eta=0.1$，用 PyTorch 计算同一次更新：
-
-~~~python
-import torch
-from torch import nn
-
-# 形状是 [样本数, 特征数]，这里各为 1。
-x = torch.tensor([[2.0]])
-y = torch.tensor([[5.0]])
-
-model = nn.Linear(1, 1)  # 输入和输出各有 1 个特征：y_hat = wx + b
-with torch.no_grad():     # 手动设定初始参数，不记录这段操作的梯度
-    model.weight.fill_(1.0)
-    model.bias.zero_()
-
-loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1)
-
-model.train()
-optimizer.zero_grad()       # 清除旧梯度
-prediction = model(x)      # 前向传播
-loss = loss_fn(prediction, y)
-loss.backward()            # 反向传播，计算梯度
-
-print(f"更新前 Loss: {loss.item():.4f}")
-print(f"w 的梯度: {model.weight.grad.item():.4f}")
-print(f"b 的梯度: {model.bias.grad.item():.4f}")
-
-optimizer.step()           # 根据梯度更新参数
-
-model.eval()
-with torch.no_grad():
-    new_prediction = model(x)
-    new_loss = loss_fn(new_prediction, y)
-
-print(f"更新后 w: {model.weight.item():.4f}")
-print(f"更新后 b: {model.bias.item():.4f}")
-print(f"更新后 Loss: {new_loss.item():.4f}")
-~~~
-
-按前面的手算，应得到以下输出；浮点数内部可能有微小误差：
-
-~~~text
-更新前 Loss: 9.0000
-w 的梯度: -12.0000
-b 的梯度: -6.0000
-更新后 w: 2.2000
-更新后 b: 0.6000
-更新后 Loss: 0.0000
-~~~
-
-PyTorch 默认会累积梯度，所以这里在反向传播前调用 `optimizer.zero_grad()` 清除旧梯度。有意做梯度累积时，清除梯度和更新参数的时机需要另行安排。
-
-更新参数以后，原来的 `loss` 仍然是更新前算出的结果。想知道新参数下的 Loss，需要重新预测、重新计算。
-
-`model.train()` 和 `model.eval()` 分别设置训练模式和评估模式。例如，Dropout 在训练时随机置零，在评估时关闭这一随机操作。本例只有线性层，切换模式不会改变预测计算。`model.eval()` 也不会关闭求导；评估时通常还会用 `torch.no_grad()` 关闭梯度记录。
-
-这些应用程序编程接口（Application Programming Interface，API）的分工可对照 [PyTorch 官方训练教程](https://docs.pytorch.org/tutorials/beginner/basics/optimization_tutorial)。
-
 
 ## 分类：从类别分数到交叉熵
 
@@ -486,6 +466,8 @@ $$
 
 softmax 和交叉熵连起来，对单个样本的 logits 求导，结果很简洁：
 
+把 $p_t=e^{z_t}/\sum_k e^{z_k}$ 代入 $\ell=-\log p_t$，得到 $\ell=-z_t+\log\sum_k e^{z_k}$。对 $z_c$ 求导时，后一项给出 $p_c$；前一项只在 $c=t$ 时给出 $-1$，恰好可以写成 $-y_c$。于是：
+
 $$
 \frac{\partial\ell}{\partial z_c}=p_c-y_c
 $$
@@ -557,6 +539,22 @@ $$
 当 $y_c=1$ 时，损失为 $-\log p_c$；当 $y_c=0$ 时，损失为 $-\log(1-p_c)$。前者要求出现的类别概率高，后者要求未出现的类别概率低。各类别的损失可以再取平均，得到一个样本的损失。
 
 PyTorch 的 `nn.BCEWithLogitsLoss` 将 sigmoid 和二元交叉熵合在一起，直接接收原始 logits。多标签情况下，logits 和浮点标签的形状都为 `[样本数, 类别数]`；默认对所有样本和类别的损失取平均。不要在传入前再做 sigmoid。参见 [BCEWithLogitsLoss 文档](https://docs.pytorch.org/docs/stable/generated/torch.nn.BCEWithLogitsLoss.html)。
+
+## 模型能表示，不等于训练能找到
+
+机器学习基础课件《BasicML》用投影片页数预测课程时长：线性模型的训练 Loss 约为 71，换成有 100 个隐藏神经元的网络后，训练 Loss 反而约为 80；调整超参数后才降到约 41。
+
+关键是分开两件事：模型允许表示哪些函数，以及训练实际找到了哪个函数。如果大模型能表示小模型的全部函数，那么在相同数据和损失下，小模型已经找到的那种解，大模型至少也能表示。新增选择不会让最好的可能结果变差，却不保证优化器能找到它。上面的 80 描述的是一次训练结果，不能直接用来判断网络的表示能力。
+
+全局最小值（Global Minimum）是在全部允许参数中比较得到的最低 Loss；局部极小值（Local Minimum）只要求附近没有更低的 Loss。前面的线性回归配合 MSE，有局部极小值也是全局最小值的性质，但神经网络通常不具备这一保证。
+
+参数初始化就是选择训练开始时的参数值。不同初始值、学习率和更新规则，会让训练走出不同路径。图中还标出了 Saddle Point（鞍点）：
+
+![Drawing 2026-09-16 14.11.12.excalidraw](/img/blogs/deep-learning-basics/drawing-2026-09-16-14-11-12-excalidraw-e2c5f1e8.svg)
+
+这是一张非凸损失的简化示意图，不是前面线性回归的 MSE 曲线。真实网络有很多参数，Loss 定义在高维参数空间里。
+
+梯度接近 0 可能出现在局部极小值、局部极大值、鞍点或较平坦的区域。鞍点附近，沿某些方向向上，沿另一些方向却能继续向下。深层网络还可能遇到梯度消失或梯度爆炸：梯度在逐层反向传播时变得过小，可能使前面层的参数几乎不更新；变得过大，则可能导致更新不稳定。不同方向上的变化尺度也可能差异很大。初始化、数据顺序、学习率和优化器都会影响训练路径。
 
 ## 自测问题
 
