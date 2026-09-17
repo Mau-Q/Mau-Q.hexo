@@ -14,7 +14,7 @@ const doctorScript = path.join(repoRoot, 'tools', 'blog-doctor.js');
 const { collectSubsetText } = require('../tools/font-subsets');
 const { buildOgImages, plainText, safeOgKey, wrapText } = require('../tools/og-images');
 const { buildSeasonalPoemPayload, buildSolarTermCalendar } = require('../tools/seasonal-poems');
-const { loadAfterwordConfig, renderAfterword, selectAfterword } = require('../tools/post-afterword');
+const { createAfterwordRenderer, loadAfterwordConfig, renderAfterword, selectAfterword } = require('../tools/post-afterword');
 
 test('sync removes stale generated posts and assets when a note is unpublished', () => {
   const fixture = makeFixture();
@@ -191,6 +191,43 @@ test('post afterword follows categories and supports explicit opt-out', () => {
   assert.ok(config.rules[1].poems.some(poem => poem.text === first.text));
   assert.equal(selectAfterword({ ...data, afterword: false }, config), null);
   assert.match(renderAfterword({ text: '<诗句>', author: '作者', title: '篇名' }), /&lt;诗句&gt;/);
+});
+
+test('afterword catalog has 70 unique attributed entries', () => {
+  const config = loadAfterwordConfig(repoRoot);
+  assert.deepEqual(config.rules.map(rule => rule.poems.length), [15, 15, 15, 15]);
+  assert.equal(config.default.length, 10);
+  const poems = [...config.rules.flatMap(rule => rule.poems), ...config.default];
+  assert.equal(new Set(poems.map(poem => poem.text)).size, 70);
+  for (const poem of poems) {
+    assert.ok(poem.text.trim());
+    assert.ok(poem.title.trim(), 'each quotation names its source');
+  }
+});
+
+test('cached afterwords preserve selection, escaping and metadata edits', () => {
+  const config = loadAfterwordConfig(repoRoot);
+  const render = createAfterwordRenderer(config);
+  const data = { path: 'posts/cache-check/', title: '学习' };
+  const check = () => assert.equal(render(data), renderAfterword(selectAfterword(data, config)));
+  check();
+  check(); // warm cache
+  data.title = '生活';
+  check(); // same path, different category
+  for (const poem of config.rules[3].poems) poem.text += ' <修订>';
+  check(); // catalog edit invalidates the cached HTML
+  assert.match(render(data), /&lt;修订&gt;/);
+  data.afterword = { text: '<自定义>', author: '甲&乙', title: '篇名' };
+  check();
+  data.afterword.text = '已修改';
+  check();
+  data.afterword = '<字符串>';
+  check();
+  data.afterword = false;
+  assert.equal(render(data), '');
+  delete data.afterword;
+  data.title = '未匹配';
+  check();
 });
 
 function makeFixture() {

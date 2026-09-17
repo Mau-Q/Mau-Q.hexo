@@ -153,6 +153,9 @@ npm run publish:local
 - 首页诗词库在构建时由 `scripts/poem-shards.js` 拆成 10 片，首页每次只请求一片；分片数量改动时需同步修改 `source/js/randomPoem.js` 中的 `SHARD_COUNT`。
 - 首页平时继续从本地诗词库随机取句；二十四节气当天会按北京时间自动替换为 `resources/seasonal-poems.json` 中的对应诗句。
 - 每篇文章末尾会按分类和标签从 `resources/post-afterwords.json` 选择固定的“文章余韵”；front matter 可用 `afterword: false` 关闭，或用 `afterword: 自定义诗句` 覆盖。
+  - 标题、分类与标签依次匹配第一条命中规则；排错、学习、工程、生活四组各 15 句，默认组 10 句，共 70 句，包含诗词与古文摘句。
+  - 组内按文章路径的稳定哈希选择，不按日期轮换；扩充候选组可能改变已有文章选中的句子。
+  - 构建时按需缓存已选句子的 HTML，缓存数量受诗句库限制；访问页面不下载诗句库、不增加浏览器脚本或请求。
 - `_config.yml` 使用 `updated_option: date` 保证不同机器构建结果一致；需要显示修改日期时，在文章 front matter 中显式填写 `updated`。
 - 字体仍使用本地霞鹜文楷 Lite 常规体和粗体，但构建时会扫描页面、文章、配置及完整诗词库并自动生成子集；新文章中的新字符会在下一次构建自动加入。
 - 无图片画廊时不会发布或加载 LightGallery；评论关闭时不会发布 Waline 资源。

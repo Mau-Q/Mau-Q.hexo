@@ -6,14 +6,13 @@
 'use strict';
 
 const {
+  createAfterwordRenderer,
   loadAfterwordConfig,
-  renderAfterword,
-  selectAfterword
 } = require('../tools/post-afterword');
 
 const config = loadAfterwordConfig(hexo.base_dir);
+const render = createAfterwordRenderer(config);
 
 hexo.extend.helper.register('post_afterword', function (page) {
-  const poem = selectAfterword(page, config);
-  return poem ? renderAfterword(poem) : '';
+  return render(page);
 });

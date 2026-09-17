@@ -15,12 +15,17 @@ function loadAfterwordConfig(projectRoot) {
 }
 
 function selectAfterword(data, config) {
+  const poem = selectAfterwordSource(data, config);
+  return poem ? normalizePoem(poem) : null;
+}
+
+function selectAfterwordSource(data, config) {
   if (data.afterword === false) return null;
   if (typeof data.afterword === 'string' && data.afterword.trim()) {
     return { text: data.afterword.trim(), author: '', title: '' };
   }
   if (data.afterword && typeof data.afterword === 'object' && data.afterword.text) {
-    return normalizePoem(data.afterword);
+    return data.afterword;
   }
 
   const context = [
@@ -38,7 +43,26 @@ function selectAfterword(data, config) {
   if (!Array.isArray(poems) || !poems.length) return null;
 
   const seed = String(data.path || data.slug || data.title || context || 'post');
-  return normalizePoem(poems[stableHash(seed) % poems.length]);
+  return poems[stableHash(seed) % poems.length];
+}
+
+// Cache only rendered catalog entries, not pages. Article metadata is reselected
+// on every call; edited entries are invalidated by their three display fields.
+function createAfterwordRenderer(config) {
+  const cache = new WeakMap();
+  return function renderPostAfterword(data) {
+    const poem = selectAfterwordSource(data, config);
+    if (!poem) return '';
+    if (data.afterword) return renderAfterword(normalizePoem(poem));
+
+    const cached = cache.get(poem);
+    if (cached && cached.text === poem.text && cached.author === poem.author && cached.title === poem.title) {
+      return cached.html;
+    }
+    const html = renderAfterword(normalizePoem(poem));
+    cache.set(poem, { text: poem.text, author: poem.author, title: poem.title, html });
+    return html;
+  };
 }
 
 function renderAfterword(poem) {
@@ -97,6 +121,7 @@ function escapeHtml(value) {
 }
 
 module.exports = {
+  createAfterwordRenderer,
   loadAfterwordConfig,
   normalizeTerms,
   renderAfterword,
