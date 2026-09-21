@@ -2,6 +2,7 @@
   "version": 1,
   "posts": [
     "source/_posts/deep-learning-basics.md",
+    "source/_posts/dont-stop-output.md",
     "source/_posts/neural-network-training-optimization-generalization.md",
     "source/_posts/post-20260719-01d8e3.md"
   ],
