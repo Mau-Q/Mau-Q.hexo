@@ -642,10 +642,48 @@ function transformEmbed(inner, note, slug) {
   }
 
   const webPath = copyAsset(sourceFile, slug);
-  const alt = path.basename(parsed.target, extension);
+  const imageMetadata = getImageMetadata(note, parsed.target);
+  const alt = imageMetadata?.alt || path.basename(parsed.target, extension);
+  const caption = imageMetadata?.caption || '';
   const sizeAttrs = imageSizeAttributes(parsed.size);
-  if (sizeAttrs) return `<img src="${webPath}" alt="${escapeHtml(alt)}" ${sizeAttrs}>`;
-  return `![${alt}](${webPath})`;
+  if (sizeAttrs) {
+    const image = `<img src="${webPath}" alt="${escapeHtml(alt)}" ${sizeAttrs}>`;
+    if (!imageMetadata) return image;
+    const figcaption = caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : '';
+    return `<figure class="post-figure">${image}${figcaption}</figure>`;
+  }
+
+  const title = caption ? ` "${escapeMarkdownTitle(caption)}"` : '';
+  return `![${escapeMarkdownImageText(alt)}](${webPath}${title})`;
+}
+
+function getImageMetadata(note, target) {
+  const metadata = note.data.imageCaptions;
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+
+  const entry = metadata[target];
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+
+  const alt = typeof entry.alt === 'string' ? entry.alt.trim() : '';
+  const caption = typeof entry.caption === 'string' ? entry.caption.trim() : '';
+  if (!alt && !caption) return null;
+  return { alt, caption };
+}
+
+function escapeMarkdownImageText(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/([\[\]])/g, '\\$1')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function escapeMarkdownTitle(value) {
+  return String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function parseEmbed(inner) {

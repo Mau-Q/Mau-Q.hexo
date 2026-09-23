@@ -1,7 +1,7 @@
 ---
 title: 神经网络训练技巧：从优化到泛化
 date: '2026-09-16 18:05:00'
-updated: '2026-09-17 09:03:02'
+updated: '2026-09-23 18:43:17'
 categories:
   - 技术
 tags:
@@ -35,7 +35,7 @@ tags:
 
 损失（Loss）是优化目标，评价指标（Metric）用于判断任务表现，两者可以不同。例如真实类别概率从 0.6 升到 0.9，两次都分类正确，准确率不变，交叉熵却从约 0.5108 降到 0.1054。完整计算见 [基础篇](/posts/deep-learning-basics/#%E5%88%86%E7%B1%BB%EF%BC%9A%E4%BB%8E%E7%B1%BB%E5%88%AB%E5%88%86%E6%95%B0%E5%88%B0%E4%BA%A4%E5%8F%89%E7%86%B5)。
 
-![训练技巧-优化与泛化](/img/blogs/neural-network-training-optimization-generalization/asset-63c5e20a.svg)
+![左侧训练拟合不足、右侧训练与验证表现逐渐分离的两组示意曲线](/img/blogs/neural-network-training-optimization-generalization/asset-63c5e20a.svg "欠拟合与过拟合的示意对比")
 
 两幅图是使用相同坐标尺度的人为示意：左图训练拟合仍不足，右图训练与验证表现逐渐分离。曲线本身不能确定原因，相关排查边界见 [基础篇的泛化与评估部分](/posts/deep-learning-basics/#%E8%AE%AD%E7%BB%83-Loss-%E5%BE%88%E4%BD%8E%E4%B9%8B%E5%90%8E%EF%BC%8C%E8%BF%98%E8%A6%81%E7%9C%8B%E4%BB%80%E4%B9%88)。
 
@@ -197,7 +197,7 @@ $$
 -\eta_t\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}
 $$
 
-![训练技巧-Adam信息流.excalidraw](/img/blogs/neural-network-training-optimization-generalization/adam-excalidraw-80865dde.svg)
+![一阶矩和二阶矩估计共同参与 Adam 参数更新的信息流](/img/blogs/neural-network-training-optimization-generalization/adam-excalidraw-80865dde.svg "Adam 的梯度统计与参数更新信息流")
 
 图中两条路径分别保留带符号的梯度信息和梯度平方的尺度信息，经过偏差修正后共同决定更新。“RMSProp + Momentum”可以帮助记忆这个联系；具体计算仍应以完整更新式为准。[Adam 原论文](https://arxiv.org/abs/1412.6980) 给出了上述算法。
 
@@ -378,7 +378,7 @@ Adam 的自适应缩放作用于各个参数；全局学习率 $\eta_t$ 仍可�
 
 下图用线性预热后接余弦衰减举例：
 
-![训练技巧-学习率调度](/img/blogs/neural-network-training-optimization-generalization/asset-26df11fa.svg)
+![先线性预热再按余弦形式衰减的学习率示意曲线](/img/blogs/neural-network-training-optimization-generalization/asset-26df11fa.svg "线性预热与余弦衰减示例")
 
 图中纵轴是学习率与峰值的比值，横轴是训练进度。前 10% 为线性 warm-up，之后按余弦曲线衰减到峰值的 10%；这些数值只是说明形状，不是任务推荐配置。学习率调度也不保证每一步损失都下降。
 
@@ -419,7 +419,7 @@ $$
 
 $x$ 是模块输入，$F(x)$ 是经过若干层得到的变换。两项必须具有可相加的形状；如果形状不同，可以用投影 $P(x)$ 替代直接传递的 $x$。
 
-![训练技巧-残差连接.excalidraw](/img/blogs/neural-network-training-optimization-generalization/excalidraw-90fa71d2.svg)
+![输入沿恒等支路与残差变换 F(x) 相加的结构示意图](/img/blogs/neural-network-training-optimization-generalization/excalidraw-90fa71d2.svg "残差连接：输入与变换分支相加")
 
 如果当前模块只需要保留输入，残差分支学到 $F(x)\approx0$ 就能使输出接近 $x$。若希望表达目标映射 $H(x)$，分支需要学习的是 $H(x)-x$。这种参数化方式让“在现有表示上做修正”更直接。[残差网络（Residual Network，ResNet）原论文](https://arxiv.org/abs/1512.03385) 从深网络的退化问题出发引入了这一思路。
 
@@ -642,4 +642,3 @@ $$
 12. 将猫图与狗图按 $\alpha=0.3$ 混合，其中 $\alpha$ 是猫图的权重，类别顺序不变。写出混合标签和交叉熵表达式。若只混合输入而沿用猫的独热标签，与正文中的 MixUp 目标有什么不同？再举一个必须同步改变标签的数据增强例子。
 
 13. 设一个标量参数更新前为 $\theta=2$，数据损失梯度 $g=3$，学习率 $\eta=0.1$，正则化系数 $\lambda=0.2$。使用正则项 $\frac{\lambda}{2}\theta^2$，分别按“对总损失做普通梯度下降”和“对数据梯度更新并做乘法权重衰减”计算新参数。为什么这两个结果相同，却不能推出给 Adam 加 L2 正则化就等于 AdamW？
-

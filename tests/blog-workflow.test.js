@@ -49,6 +49,30 @@ test('sync removes stale generated posts and assets when a note is unpublished',
   assert.deepEqual(manifest.assets, []);
 });
 
+test('sync applies Obsidian image alt text and captions to generated Markdown', () => {
+  const fixture = makeFixture();
+  const imageFile = path.join(fixture.blogsDir, 'photo.png');
+  fs.writeFileSync(imageFile, 'fixture-image');
+
+  const note = readyNote().replace(
+    'status: ready',
+    [
+      'status: ready',
+      'imageCaptions:',
+      '  "photo.png":',
+      '    alt: 有意义的图片描述',
+      '    caption: 样例图注'
+    ].join('\n')
+  );
+  fs.writeFileSync(path.join(fixture.blogsDir, 'sample.md'), note, 'utf8');
+
+  const result = runNode(syncScript, [], fixture.root);
+  assert.equal(result.status, 0, result.stderr);
+
+  const output = fs.readFileSync(path.join(fixture.root, 'source', '_posts', 'sample-post.md'), 'utf8');
+  assert.match(output, /!\[有意义的图片描述\]\(\/img\/blogs\/sample-post\/photo-[a-f0-9]+\.png "样例图注"\)/);
+});
+
 test('doctor derives post outputs and rejects missing local sitemap targets', () => {
   const fixture = makeFixture();
   const postDir = path.join(fixture.root, 'source', '_posts');

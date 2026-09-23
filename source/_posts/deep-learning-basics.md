@@ -1,7 +1,7 @@
 ---
 title: 深度学习基础：模型是怎么训练的
 date: '2026-09-16 18:00:00'
-updated: '2026-09-17 09:03:02'
+updated: '2026-09-23 18:43:17'
 categories:
   - 技术
 tags:
@@ -15,7 +15,7 @@ tags:
 
 模型预测错了，可以用损失（Loss）衡量预测与真实值的差距。但 Loss 只是一个数，怎样从这个数知道每个参数该改多少？
 
-![深度学习-机器学习整体流程.excalidraw](/img/blogs/deep-learning-basics/excalidraw-f1e08b3f.svg)
+![机器学习从目标、模型、参数优化到验证和测试的流程图](/img/blogs/deep-learning-basics/excalidraw-f1e08b3f.svg "机器学习的训练与评估流程")
 
 从整体流程看，可以把机器学习过程粗略拆成“3＋1”：定义目标、选择模型、优化参数，再通过验证（Validation）和测试（Testing）检查泛化。本文为了理解“模型怎么训练”，会从一次错误预测开始，沿 Loss → 梯度 → 参数更新逐步展开，再扩展到神经网络、分类和泛化。
 
@@ -156,7 +156,7 @@ $$
 
 更新方向没变，Loss 却从 9 增加到了 36。梯度给的是局部信息，步子太大就可能越过低点。学习率过小则可能让训练很慢。
 
-![Drawing 2026-09-15 22.21.57.excalidraw 2](/img/blogs/deep-learning-basics/drawing-2026-09-15-22-21-57-excalidraw-2-996835ac.svg)
+![学习率过大时参数越过损失低点、导致损失上升的示意图](/img/blogs/deep-learning-basics/drawing-2026-09-15-22-21-57-excalidraw-2-996835ac.svg "学习率过大可能越过损失低点")
 
 计算 Loss 还需要真实标签，图中没有单独画出这条输入。
 
@@ -366,7 +366,7 @@ $$
 f(x)=\operatorname{ReLU}(x)-2\operatorname{ReLU}(x-1)+\operatorname{ReLU}(x-2)
 $$
 
-![深度学习-ReLU叠加曲线.excalidraw](/img/blogs/deep-learning-basics/relu-excalidraw-1e7dcbdb.svg)
+![三个 ReLU 单元叠加形成的分段函数曲线](/img/blogs/deep-learning-basics/relu-excalidraw-1e7dcbdb.svg "三个 ReLU 单元的叠加曲线")
 
 三个折点分别在 $0,1,2$。把各项代进去：
 
@@ -397,7 +397,7 @@ $$
 
 特征是描述一个样本的输入属性。把多个数值特征放在一起，就得到输入向量。如果输入有两个特征 $x_1,x_2$，每个隐藏神经元先计算 $w_{i,1}x_1+w_{i,2}x_2+b_i$，再经过 ReLU：
 
-![深度学习-神经网络结构.excalidraw](/img/blogs/deep-learning-basics/excalidraw-92399e10.svg)
+![两个输入特征连接到三个隐藏神经元和一个输出单元的前馈网络结构图](/img/blogs/deep-learning-basics/excalidraw-92399e10.svg "从输入特征到输出的前馈计算结构")
 
 每个隐藏神经元都接收两个输入，但有各自的权重和偏置。输出层将三个隐藏值加权求和，再加上输出偏置。把同一层的计算合在一起，可以写成：
 
@@ -595,7 +595,7 @@ tensor([[ 0.2447, -0.3348,  0.0900]])
 
 过拟合指模型过度适应了训练数据中的细节或噪声，在新数据上的表现较差。例如训练 Loss 持续下降，验证 Loss 却开始回升，就可能已经过拟合：
 
-![深度学习-训练与验证Loss.excalidraw](/img/blogs/deep-learning-basics/loss-excalidraw-a343f6dc.svg)
+![训练损失持续下降而验证损失回升的示意曲线](/img/blogs/deep-learning-basics/loss-excalidraw-a343f6dc.svg "训练与验证损失分离可能提示过拟合")
 
 欠拟合指模型尚未充分学到数据中的规律，连训练数据也拟合不好。训练和验证都差，可能是欠拟合，也可能是数据、训练设置或实现有问题；训练很好而验证明显较差，除了过拟合，也要检查两份数据是否存在分布差异。单凭一条验证曲线，不能确定全部原因。
 
@@ -611,7 +611,7 @@ tensor([[ 0.2447, -0.3348,  0.0900]])
 
 参数初始化就是选择训练开始时的参数值。不同初始值、学习率和更新规则，会让训练走出不同路径。图中还标出了 Saddle Point（鞍点）：
 
-![Drawing 2026-09-16 14.11.12.excalidraw](/img/blogs/deep-learning-basics/drawing-2026-09-16-14-11-12-excalidraw-e2c5f1e8.svg)
+![带有鞍点的非凸损失曲面示意图](/img/blogs/deep-learning-basics/drawing-2026-09-16-14-11-12-excalidraw-e2c5f1e8.svg "非凸损失曲面中的鞍点")
 
 这是一张非凸损失的简化示意图。真实网络有很多参数，Loss 定义在高维参数空间里。
 
@@ -654,4 +654,3 @@ tensor([[ 0.2447, -0.3348,  0.0900]])
 13. 对 $p=(0.2,0.7,0.1)$、$y=(0,1,0)$，计算交叉熵对三个 logits 的梯度。每个分量的正负意味着什么？这些梯度还需要经过哪些计算，才能用于更新输出层权重？
 
 14. 一个 batch 有 32 张图片、3 个互斥类别，使用类别编号作为标签。传给 `nn.CrossEntropyLoss` 的 logits 和 target 应各是什么形状？target 应使用什么数据类型？如果先做 softmax 再传入损失函数，哪里出了问题？如果一张图片可以同时有“猫”和“狗”，为什么各类别概率不应再被要求加起来等于 1？通常改用哪种概率转换和损失？
-
