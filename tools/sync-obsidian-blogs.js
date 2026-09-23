@@ -695,8 +695,8 @@ function transformBody(note, slug, publishedMap) {
 }
 
 function transformLine(line, note, slug, publishedMap) {
+  // Preserve callout markers for the site's Marked blockquote renderer.
   return line
-    .replace(/^> \[!([a-zA-Z0-9_-]+)\][+-]?(?:[ \t]+(.+))?$/, (_, type, title) => `> **${title || type}**`)
     .replace(/!\[\[([^\]]+)\]\]/g, (_, inner) => transformEmbed(inner, note, slug))
     .replace(/!\[([^\]]+)\]\(([^)]+)\)/g, (_, alt, url) => {
       const cleanAlt = alt.split('|')[0].trim();

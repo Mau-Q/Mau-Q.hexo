@@ -10,7 +10,7 @@
  *  - header views: add semantic navigation and an accessible homepage hierarchy
  *  - index/list:   render scannable homepage and archive cards
  *  - footer.ejs:   use native JS, local poetry shards and conditional galleries
- *  - post.ejs:     render semantic titles, Pagefind content and article afterwords
+ *  - post.ejs:     render semantic titles, H1-H3 TOC, Pagefind content and article afterwords
  */
 'use strict';
 
@@ -67,6 +67,12 @@ hexo.on('generateBefore', function () {
     .join(leftTitle.replace('<div ', '<h1 ').replace('</div>', '</h1>'))
     .split(centeredTitle)
     .join(centeredTitle.replace('<div ', '<h1 ').replace('</div>', '</h1>'));
+
+  const tocDepth = '                    max_depth: 6';
+  if (postContent.split(tocDepth).length - 1 !== 1) {
+    throw new Error(`theme-patch: unexpected post TOC depth in ${themePostFile}`);
+  }
+  postContent = postContent.replace(tocDepth, '                    max_depth: 3');
 
   const postBodyMarker = '    <div class="post-md">';
   if (!postContent.includes(postBodyMarker)) {

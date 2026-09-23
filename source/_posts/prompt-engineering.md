@@ -26,7 +26,7 @@ Prompt Engineering 就是在不修改模型参数的情况下改变 context，�
 
 不给示例，只提供任务指令和输入。本质是在模型预训练阶段，已经学习了大量知识，Zero-shot Prompting 就是让模型调用现有能力完成任务。
 
-> **示例 | 情感分类**
+> [!example] 示例 | 情感分类
 >
 > **Prompt**
 >
@@ -43,7 +43,7 @@ Prompt Engineering 就是在不修改模型参数的情况下改变 context，�
 
 **Instruction** → **Label definition** → **Query** → **Output constraint**
 
-> **示例｜问题分类**
+> [!example] 示例｜问题分类
 >
 > **Prompt**
 >
@@ -60,7 +60,7 @@ Prompt Engineering 就是在不修改模型参数的情况下改变 context，�
 
 与 zero-shot 不同点在于在 prompt 中加入少量示例。
 
-> **示例｜分类问题**
+> [!example] 示例｜分类问题
 >
 > **示例 1：**
 > 问题：计算 1+2
@@ -97,7 +97,7 @@ Few-shot Prompting 就是 ICL 的一种典型形式。模型通过给出的 cont
 
 ### 1. 任务
 
-> **示例｜**
+> [!example] 示例｜
 >
 > **比如：**
 > Paris → France
@@ -113,7 +113,7 @@ Few-shot Prompting 就是 ICL 的一种典型形式。模型通过给出的 cont
 
 假设任务使用自定义标签 `A`、`B`、`C`，模型本身并不知道这些标签代表什么。
 
-> **示例｜推断标签语义**
+> [!example] 示例｜推断标签语义
 >
 > **Zero-shot**
 >
@@ -181,7 +181,7 @@ Few-shot 示例还可以帮助模型学习输出格式。
 
 比如任务：```判断一句话是否包含事实错误```，而“事实错误”的标准可能很模糊。
 
-> **示例｜**
+> [!example] 示例｜
 >
 > **通过 examples：**
 > "The Earth revolves around the Sun."
@@ -215,7 +215,7 @@ Few-shot demonstrations 本身就是 context 的一部分，因此**示例内容
 
 模型接收到的 context 就已经不同，因此后续 token 的概率分布也可能发生变化。
 
-> **示例｜错误 demonstrations 带来的偏移**
+> [!example] 示例｜错误 demonstrations 带来的偏移
 >
 > **任务**
 >
@@ -268,7 +268,7 @@ Few-shot demonstrations 本身就是 context 的一部分，因此**示例内容
 
 给模型设置一个全局行为框架。可以理解成：你应该怎么做，是长期规则。与 `System` 经常一起出现的是 `User`，可以理解成：现在具体做什么，更像当前任务。
 
-> **示例｜**
+> [!example] 示例｜
 >
 > **System**
 > 你是科研助手。
@@ -284,7 +284,7 @@ Few-shot demonstrations 本身就是 context 的一部分，因此**示例内容
 
 是 prompt **最核心的一部分**：明确告诉模型要执行什么操作。而`Instuction` 最核心的是**动作**，可以想象成`动词 + 对象`，所以在写 Prompt 时，应该想我到底希望模型执行哪个动作？
 
-> **示例｜**
+> [!example] 示例｜
 >
 > **不好的写法**
 > 这篇论文的数据集。
@@ -303,7 +303,7 @@ Few-shot demonstrations 本身就是 context 的一部分，因此**示例内容
 
 比如让模型读一篇论文：
 
-> **示例｜**
+> [!example] 示例｜
 >
 > **输入**
 > Extract the training dataset from this paper.

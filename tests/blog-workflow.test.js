@@ -73,6 +73,29 @@ test('sync applies Obsidian image alt text and captions to generated Markdown', 
   assert.match(output, /!\[有意义的图片描述\]\(\/img\/blogs\/sample-post\/photo-[a-f0-9]+\.png "样例图注"\)/);
 });
 
+test('sync preserves Obsidian callout markers for the Markdown renderer', () => {
+  const fixture = makeFixture();
+  const note = readyNote().replace('![[photo.png]]', '').replace('正文', [
+    '> [!example] 示例｜情感分类',
+    '>',
+    '> **Prompt**',
+    '> 判断情感。',
+    '',
+    '> [!note] 核心理解',
+    '> 内容',
+    '',
+    '> 普通引用'
+  ].join('\n'));
+  fs.writeFileSync(path.join(fixture.blogsDir, 'sample.md'), note, 'utf8');
+
+  const result = runNode(syncScript, [], fixture.root);
+  assert.equal(result.status, 0, result.stderr);
+  const output = fs.readFileSync(path.join(fixture.root, 'source/_posts/sample-post.md'), 'utf8');
+  assert.match(output, /> \[!example\] 示例｜情感分类/);
+  assert.match(output, /> \[!note\] 核心理解/);
+  assert.match(output, /> 普通引用/);
+});
+
 test('doctor derives post outputs and rejects missing local sitemap targets', () => {
   const fixture = makeFixture();
   const postDir = path.join(fixture.root, 'source', '_posts');
