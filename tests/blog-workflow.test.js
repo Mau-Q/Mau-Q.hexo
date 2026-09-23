@@ -125,7 +125,7 @@ test('doctor derives post outputs and rejects missing local sitemap targets', ()
 test('sync preserves Chinese heading links and distinguishes token terminology from credentials', () => {
   const fixture = makeFixture();
   const note = path.join(fixture.blogsDir, 'sample.md');
-  fs.writeFileSync(note, readyNote().replace('![[photo.png]]', '[[sample#模型能表示，不等于训练能找到|说明]]\ntoken（词元，即输入单元）'));
+  fs.writeFileSync(note, readyNote().replace('![[photo.png]]', '[[sample#模型能表示，不等于训练能找到|说明]]\nnext token / 下一个 token / 后续 token'));
   const result = runNode(syncScript, [], fixture.root);
   assert.equal(result.status, 0, result.stderr);
   const output = fs.readFileSync(path.join(fixture.root, 'source/_posts/sample-post.md'), 'utf8');

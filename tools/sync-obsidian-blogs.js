@@ -21,7 +21,8 @@ const PUBLISHING_RISK_PATTERNS = [
   ['TODO', /\bTODO\b/i],
   ['FIXME', /\bFIXME\b/i],
   ['unfinished draft marker', /待补|待完善|未完成|草稿/],
-  ['password or secret', /密码|password|passwd|secret|token(?!（词元)/i],
+  // These next-token phrases are model terminology; credential fields remain blocked.
+  ['password or secret', /密码|password|passwd|secret|(?<!next )(?<!下一个 )(?<!后续 )token(?!（词元)/i],
   ['account', /账号|账户|account/i],
   ['id card', /身份证/],
   ['phone number', /手机号|电话[:：]?\s*1[3-9]\d{9}|(^|[^\d])1[3-9]\d{9}([^\d]|$)/],
