@@ -26,7 +26,12 @@ hexo.extend.filter.register('before_generate', async function () {
   });
 
   generatedCards = result.cards;
-  hexo.log.info('og-images: generated %d local share cards', generatedCards.length);
+  const reused = generatedCards.filter(card => card.cacheHit).length;
+  hexo.log.info('og-images: %d local share cards (%d cached, %d generated)',
+    generatedCards.length,
+    reused,
+    generatedCards.length - reused
+  );
 });
 
 hexo.extend.filter.register('after_generate', function () {

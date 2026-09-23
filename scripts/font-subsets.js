@@ -16,11 +16,12 @@ hexo.extend.filter.register('before_generate', async function () {
   for (const item of generatedSubsets) {
     const saved = 100 - (item.subsetBytes / item.originalBytes * 100);
     hexo.log.info(
-      'font-subsets: %s %dK -> %dK (%d%% smaller)',
+      'font-subsets: %s %dK -> %dK (%d%% smaller, %s)',
       item.fontName,
       Math.round(item.originalBytes / 1024),
       Math.round(item.subsetBytes / 1024),
-      Math.round(saved)
+      Math.round(saved),
+      item.cacheHit ? 'cached' : 'generated'
     );
   }
 });

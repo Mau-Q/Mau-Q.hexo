@@ -4,10 +4,12 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { createHash } = require('node:crypto');
 const sharp = require('sharp');
 
 const DEFAULT_WIDTH = 1200;
 const DEFAULT_HEIGHT = 630;
+const CACHE_SCHEMA_VERSION = 1;
 
 async function buildOgImages(options = {}) {
   const projectRoot = path.resolve(options.projectRoot || path.resolve(__dirname, '..'));
@@ -17,46 +19,119 @@ async function buildOgImages(options = {}) {
   const site = options.site || {};
   const posts = Array.isArray(options.posts) ? options.posts : [];
   const fontDir = path.join(projectRoot, 'node_modules', 'hexo-theme-a4', 'source', 'fonts');
-  const regularFont = readFont(path.join(fontDir, 'LXGWWenKaiLite-Regular.woff2'));
-  const boldFont = readFont(path.join(fontDir, 'LXGWWenKaiLite-Bold.woff2'));
+  const regularFont = readFontBuffer(path.join(fontDir, 'LXGWWenKaiLite-Regular.woff2'));
+  const boldFont = readFontBuffer(path.join(fontDir, 'LXGWWenKaiLite-Bold.woff2'));
 
   fs.mkdirSync(outputDir, { recursive: true });
-  for (const entry of fs.readdirSync(outputDir, { withFileTypes: true })) {
-    if (entry.isFile() && entry.name.endsWith('.png')) fs.rmSync(path.join(outputDir, entry.name));
-  }
 
-  const cards = [];
-  cards.push(await renderCard({
-    outputDir,
+  const lockfilePath = path.join(projectRoot, 'package-lock.json');
+  const dependencyFingerprint = hashBytes(
+    fs.existsSync(lockfilePath) ? fs.readFileSync(lockfilePath) : Buffer.alloc(0)
+  );
+  const rendererFingerprint = hashBytes(Buffer.from(JSON.stringify({
+    schemaVersion: CACHE_SCHEMA_VERSION,
+    dependencyFingerprint,
+    generatorFingerprint: hashBytes(fs.readFileSync(__filename)),
+    regularFontFingerprint: hashBytes(regularFont),
+    boldFontFingerprint: hashBytes(boldFont),
+    sharpVersions: sharp.versions || {},
+    nodeVersion: process.versions.node,
+    platform: process.platform,
+    arch: process.arch
+  }), 'utf8'));
+  const manifestPath = path.join(outputDir, 'manifest.json');
+  const previousManifest = readJsonFile(manifestPath);
+  const canReuseCache = previousManifest &&
+    previousManifest.schemaVersion === CACHE_SCHEMA_VERSION &&
+    previousManifest.rendererFingerprint === rendererFingerprint;
+  const previousCards = canReuseCache && previousManifest.cards && typeof previousManifest.cards === 'object'
+    ? previousManifest.cards
+    : {};
+
+  const cardInputs = [{
     key: 'site',
-    width,
-    height,
     title: site.title || 'Mau-Q',
     description: site.description || '',
     eyebrow: site.subtitle || '学习 · 记录 · 成长',
-    footer: new URL(site.url || 'https://mau-q.github.io').host,
-    regularFont,
-    boldFont
-  }));
+    footer: new URL(site.url || 'https://mau-q.github.io').host
+  }];
 
   for (const post of posts) {
     const routePath = String(post.path || '').trim();
     if (!routePath) continue;
     const categories = normalizeCollection(post.categories);
     const dateText = formatDate(post.date);
-    cards.push(await renderCard({
-      outputDir,
+    cardInputs.push({
       key: safeOgKey(routePath),
-      width,
-      height,
       title: String(post.title || '未命名文章'),
       description: plainText(post.description || post.excerpt || post.content || ''),
       eyebrow: categories[0] || '文章',
-      footer: [dateText, site.title || 'Mau-Q'].filter(Boolean).join(' · '),
-      regularFont,
-      boldFont
-    }));
+      footer: [dateText, site.title || 'Mau-Q'].filter(Boolean).join(' · ')
+    });
   }
+
+  const cards = [];
+  const nextCards = Object.create(null);
+  let regularFontBase64;
+  let boldFontBase64;
+
+  for (const cardInput of cardInputs) {
+    const inputFingerprint = hashBytes(Buffer.from(JSON.stringify({
+      rendererFingerprint,
+      key: cardInput.key,
+      width,
+      height,
+      title: cardInput.title,
+      description: cardInput.description,
+      eyebrow: cardInput.eyebrow,
+      footer: cardInput.footer
+    }), 'utf8'));
+    const outputFile = path.join(outputDir, `${cardInput.key}.png`);
+    const cachedEntry = previousCards[cardInput.key];
+
+    if (cachedEntry && cachedEntry.inputFingerprint === inputFingerprint && fs.existsSync(outputFile)) {
+      const cachedImage = fs.readFileSync(outputFile);
+      if (cachedImage.length === cachedEntry.bytes && hashBytes(cachedImage) === cachedEntry.outputFingerprint) {
+        cards.push({ key: cardInput.key, outputFile, bytes: cachedImage.length, cacheHit: true });
+        nextCards[cardInput.key] = cachedEntry;
+        continue;
+      }
+    }
+
+    if (regularFontBase64 === undefined) {
+      regularFontBase64 = regularFont.toString('base64');
+      boldFontBase64 = boldFont.toString('base64');
+    }
+    const card = await renderCard({
+      ...cardInput,
+      outputDir,
+      width,
+      height,
+      regularFont: regularFontBase64,
+      boldFont: boldFontBase64
+    });
+    const imageBytes = fs.readFileSync(outputFile);
+    cards.push({ ...card, cacheHit: false });
+    nextCards[cardInput.key] = {
+      inputFingerprint,
+      bytes: imageBytes.length,
+      outputFingerprint: hashBytes(imageBytes)
+    };
+  }
+
+  const currentPngs = new Set(cards.map(card => path.resolve(card.outputFile)));
+  for (const entry of fs.readdirSync(outputDir, { withFileTypes: true })) {
+    const filePath = path.join(outputDir, entry.name);
+    if (entry.isFile() && entry.name.endsWith('.png') && !currentPngs.has(path.resolve(filePath))) {
+      fs.rmSync(filePath);
+    }
+  }
+
+  writeJsonFileAtomic(manifestPath, {
+    schemaVersion: CACHE_SCHEMA_VERSION,
+    rendererFingerprint,
+    cards: nextCards
+  });
 
   return { outputDir, cards, width, height };
 }
@@ -180,9 +255,27 @@ function formatDate(value) {
   return [parsed.getFullYear(), String(parsed.getMonth() + 1).padStart(2, '0'), String(parsed.getDate()).padStart(2, '0')].join('-');
 }
 
-function readFont(file) {
+function readFontBuffer(file) {
   if (!fs.existsSync(file)) throw new Error(`OG font not found: ${file}`);
-  return fs.readFileSync(file).toString('base64');
+  return fs.readFileSync(file);
+}
+
+function hashBytes(value) {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function readJsonFile(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (error) {
+    return null;
+  }
+}
+
+function writeJsonFileAtomic(filePath, value) {
+  const temporaryPath = `${filePath}.${process.pid}.tmp`;
+  fs.writeFileSync(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  fs.renameSync(temporaryPath, filePath);
 }
 
 function escapeXml(value) {

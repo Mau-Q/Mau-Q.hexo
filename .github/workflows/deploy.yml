@@ -3,10 +3,15 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
-  group: pages-deploy
+  group: ${{ github.event_name == 'pull_request' && format('pages-pr-{0}', github.event.pull_request.number) || format('pages-deploy-{0}', github.ref) }}
   cancel-in-progress: true
 
 jobs:
@@ -22,6 +27,17 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
+      - name: Cache generated Hexo assets
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/font-subsets
+            .cache/og-images
+          key: >-
+            mauq-build-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-${{ hashFiles('tools/font-subsets.js', 'tools/og-images.js', 'source/**', 'resources/**', 'layout-overrides/**', '_config.yml', '_config.a4.yml', 'blog-slug-dictionary.json', 'obsidian-blog.config.json') }}
+          restore-keys: |
+            mauq-build-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-
+
       - name: Install dependencies
         run: npm ci
 
@@ -34,6 +50,7 @@ jobs:
           npm run blog:doctor
 
       - name: Deploy to GitHub Pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.DEPLOY_TOKEN }}
@@ -41,3 +58,23 @@ jobs:
           publish_branch: master
           publish_dir: ./public
           commit_message: 'deploy: ${{ github.event.head_commit.message }}'
+
+      - name: Verify live pages
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          SITE_URL: https://mau-q.github.io
+        run: |
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error --location "$SITE_URL/" --output /tmp/mauq-home.html \
+              && grep -qi '<html' /tmp/mauq-home.html \
+              && curl --fail --silent --show-error --location "$SITE_URL/sitemap.xml" --output /tmp/mauq-sitemap.xml \
+              && grep -q '<urlset' /tmp/mauq-sitemap.xml \
+              && curl --fail --silent --show-error --location "$SITE_URL/search/" --output /dev/null; then
+              echo "Live homepage, sitemap, and search route responded."
+              exit 0
+            fi
+            echo "Waiting for GitHub Pages to serve the deployment (attempt $attempt/12)."
+            sleep 10
+          done
+          echo "Live checks did not pass after 120 seconds." >&2
+          exit 1

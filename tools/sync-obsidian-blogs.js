@@ -41,6 +41,7 @@ const publicAssetsRoot = toPosix(path.relative(path.join(projectRoot, 'source'),
 const errors = [];
 const warnings = [];
 const copiedAssets = new Map();
+const plannedAssetCopies = new Map();
 const generatedAssetFiles = new Set();
 let assetIndex = null;
 
@@ -79,7 +80,23 @@ function main() {
     printErrorsAndExit();
   }
 
-  finalizeGeneratedContent(results.filter(Boolean));
+  const successfulResults = results.filter(Boolean);
+  const cleanupPlan = planGeneratedContent(successfulResults);
+  if (errors.length && strict) {
+    printErrorsAndExit();
+  }
+
+  if (dryRun) {
+    finalizeGeneratedContent(cleanupPlan);
+  } else {
+    const staged = stageGeneratedContent(successfulResults);
+    try {
+      commitStagedContent(staged);
+      finalizeGeneratedContent(cleanupPlan);
+    } finally {
+      fs.rmSync(staged.root, { recursive: true, force: true });
+    }
+  }
 
   if (!readyNotes.length) {
     console.log(`No ready Obsidian blog posts found in ${blogsDir}`);
@@ -242,19 +259,15 @@ function syncNote(note, publishedMap) {
   ].join('\n'));
 
   const targetFile = path.join(postsDir, `${slug}.md`);
-  if (!dryRun) {
-    fs.mkdirSync(path.dirname(targetFile), { recursive: true });
-    fs.writeFileSync(targetFile, output, 'utf8');
-  }
-
   return {
     source: toPosix(path.relative(vaultDir, note.file)),
     target: toPosix(path.relative(projectRoot, targetFile)),
-    targetFile
+    targetFile,
+    output
   };
 }
 
-function finalizeGeneratedContent(results) {
+function planGeneratedContent(results) {
   const expectedPosts = new Set(results.map(result => result.target));
   const expectedAssets = new Set(generatedAssetFiles);
   const previous = readManifest();
@@ -284,10 +297,68 @@ function finalizeGeneratedContent(results) {
     }
   }
 
-  for (const file of [...stalePostFiles].sort()) {
+  return { expectedPosts, expectedAssets, stalePostFiles, staleAssetFiles };
+}
+
+function stageGeneratedContent(results) {
+  const cacheDir = path.join(projectRoot, '.cache');
+  fs.mkdirSync(cacheDir, { recursive: true });
+  const root = fs.mkdtempSync(path.join(cacheDir, 'obsidian-sync-'));
+  const stagedPostsDir = path.join(root, 'posts');
+  const stagedAssetsDir = path.join(root, 'assets');
+
+  try {
+    for (const [targetFile, sourceFile] of plannedAssetCopies) {
+      assertInside(targetFile, assetsDir);
+      const relative = path.relative(assetsDir, targetFile);
+      const stagedFile = path.join(stagedAssetsDir, relative);
+      fs.mkdirSync(path.dirname(stagedFile), { recursive: true });
+      fs.copyFileSync(sourceFile, stagedFile);
+    }
+
+    for (const result of results) {
+      assertInside(result.targetFile, postsDir);
+      const relative = path.relative(postsDir, result.targetFile);
+      const stagedFile = path.join(stagedPostsDir, relative);
+      fs.mkdirSync(path.dirname(stagedFile), { recursive: true });
+      fs.writeFileSync(stagedFile, result.output, 'utf8');
+    }
+  } catch (error) {
+    fs.rmSync(root, { recursive: true, force: true });
+    throw error;
+  }
+
+  return { root, stagedPostsDir, stagedAssetsDir };
+}
+
+function commitStagedContent(staged) {
+  for (const [stagedDir, targetDir] of [
+    [staged.stagedAssetsDir, assetsDir],
+    [staged.stagedPostsDir, postsDir]
+  ]) {
+    if (!fs.existsSync(stagedDir)) continue;
+    for (const stagedFile of walkFiles(stagedDir)) {
+      const relative = path.relative(stagedDir, stagedFile);
+      const targetFile = path.join(targetDir, relative);
+      assertInside(targetFile, targetDir);
+      const temporaryFile = targetFile + '.tmp-' + process.pid;
+      fs.mkdirSync(path.dirname(targetFile), { recursive: true });
+      try {
+        fs.copyFileSync(stagedFile, temporaryFile);
+        fs.renameSync(temporaryFile, targetFile);
+      } catch (error) {
+        if (fs.existsSync(temporaryFile)) fs.unlinkSync(temporaryFile);
+        throw error;
+      }
+    }
+  }
+}
+
+function finalizeGeneratedContent(plan) {
+  for (const file of [...plan.stalePostFiles].sort()) {
     removeGeneratedFile(file, postsDir);
   }
-  for (const file of [...staleAssetFiles].sort()) {
+  for (const file of [...plan.staleAssetFiles].sort()) {
     removeGeneratedFile(file, assetsDir);
   }
 
@@ -295,10 +366,17 @@ function finalizeGeneratedContent(results) {
     removeEmptyDirectories(assetsDir);
     const manifest = {
       version: 1,
-      posts: [...expectedPosts].sort(),
-      assets: [...expectedAssets].sort()
+      posts: [...plan.expectedPosts].sort(),
+      assets: [...plan.expectedAssets].sort()
     };
-    fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+    const temporaryManifest = manifestPath + '.tmp-' + process.pid;
+    try {
+      fs.writeFileSync(temporaryManifest, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+      fs.renameSync(temporaryManifest, manifestPath);
+    } catch (error) {
+      if (fs.existsSync(temporaryManifest)) fs.unlinkSync(temporaryManifest);
+      throw error;
+    }
   }
 }
 
@@ -774,10 +852,7 @@ function copyAsset(sourceFile, slug) {
   const targetFile = path.join(targetDir, fileName);
   const webPath = `/${toPosix(path.join(publicAssetsRoot, slug, fileName))}`;
 
-  if (!dryRun) {
-    fs.mkdirSync(targetDir, { recursive: true });
-    fs.copyFileSync(sourceFile, targetFile);
-  }
+  if (!dryRun) plannedAssetCopies.set(targetFile, sourceFile);
 
   generatedAssetFiles.add(toPosix(path.relative(projectRoot, targetFile)));
   copiedAssets.set(cacheKey, webPath);

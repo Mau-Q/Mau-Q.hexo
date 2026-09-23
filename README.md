@@ -32,7 +32,7 @@ npm run blog:slug:fix
 # 最终验收：产物、外链、隐私/草稿词、Obsidian 残留语法
 npm run blog:doctor
 
-# 一键检查 Obsidian 博客文章，不写入发布产物
+# 源稿预检：预览 slug 和同步计划，不写入发布产物
 npm run blog:check
 
 # 同步 Obsidian 文章后构建
@@ -71,6 +71,7 @@ npm test
 | `blog-slug-dictionary.json` | 自动生成 slug 的中文技术词典 |
 | `tools/sync-obsidian-blogs.js` | Obsidian `Blogs/` 到 Hexo 的同步脚本 |
 | `tools/blog-doctor.js` | 发布前最终验收脚本 |
+| `tools/publish-local.js` | 本地发布预检、删除预览与确认同步 |
 | `tools/font-subsets.js` | 根据站点文本生成霞鹜文楷常规体、粗体子集 |
 | `tools/seasonal-poems.js` | 生成 2020—2100 年二十四节气日期表 |
 | `tools/post-afterword.js` | 按文章分类、标签稳定选择文章余韵 |
@@ -101,14 +102,16 @@ npm test
 npm run publish:local
 ```
 
-这会在本地构建并 rsync 到 `../Mau-Q.github.io/`，然后手动 git commit + push。
+这会先确认发布目录位于配置的 Git 分支且工作区干净，再自动补齐 Obsidian slug、同步 ready 文章、运行语法检查和测试、清理并构建、运行 doctor。随后显示 rsync 的逐项预览；检查删除和新增项后，输入 SYNC-LOCAL 才会写入本地发布目录。目标仓库存在未提交或未跟踪文件时会停止。该命令只更新本地发布目录，不会 commit 或 push。
+
+发布 Obsidian 文章时，先运行博客检查预览，再运行本命令。单独预览页面时仍可运行博客准备流程；之后若要本地发布，本命令会重新同步并构建一次。
 
 ### 方式二：GitHub Actions（当前推荐）
 
 1. 将本项目 push 到 GitHub 新仓库（如 `Mau-Q/blog-source`）
 2. 在 GitHub 创建 [Personal Access Token](https://github.com/settings/tokens)（勾选 `repo` 权限）
 3. 在源码仓库 Settings → Secrets 中添加 `DEPLOY_TOKEN`，值为上一步的 token
-4. 之后每次 push 源码，GitHub Actions 会先运行语法检查、测试、构建和 doctor，再部署到 `Mau-Q.github.io`
+4. Pull request 会运行语法检查、测试、构建和 doctor；push 到 main 或从 main 手动运行时才会部署到 `Mau-Q.github.io`，随后检查首页、站点地图和搜索页是否可访问。
 
 ## 已知事项
 
@@ -137,8 +140,9 @@ npm run publish:local
   - 自动写回后，后续同步会一直使用这个固定网址；如果想强制指定，也可以手动改成 `slug: git-reset-reflog`。
   - `![[图片.png]]` 会复制到 `source/img/blogs/<文章网址名>/` 并改成普通 Markdown 图片。
   - `[[内部链接]]` 会优先转成已发布文章链接；找不到对应发布文章时，只保留显示文字。
-  - 日常推荐流程：先运行 `npm run blog:check` 预览，再运行 `npm run blog:ready` 准备发布。
+  - 日常推荐流程：先运行 blog:check 预览源稿和同步计划。生成产物的验收在 blog:ready 或 publish:local 构建之后进行。
   - `npm run blog:doctor` 会检查生成产物、远程外链、未处理的 Obsidian 语法、本地路径和常见隐私/草稿词。
+  - 同步会先转换并校验全部 ready 文章，再暂存文章和图片产物，避免后续文章校验失败时留下前面已写入的半套结果。
   - 同步清单只管理由该工具生成的文章和图片；文章取消 `ready` 后，相应生成文件会在下一次同步时安全移除。
   - `npm run blog:ready` 不会自动 commit 或 push，确认本地效果后再手动发布。
 

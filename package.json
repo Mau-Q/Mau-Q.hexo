@@ -5,13 +5,13 @@
   "scripts": {
     "build": "hexo generate && npm run search:index",
     "test": "node --test tests/*.test.js",
-    "check:syntax": "node --check tools/sync-obsidian-blogs.js && node --check tools/blog-doctor.js && node --check tools/font-subsets.js && node --check tools/og-images.js && node --check tools/seasonal-poems.js && node --check tools/post-afterword.js && node --check scripts/accessibility.js && node --check scripts/font-subsets.js && node --check scripts/og-images.js && node --check scripts/poem-shards.js && node --check scripts/seasonal-poems.js && node --check scripts/post-afterword.js && node --check scripts/theme-patch.js && node --check source/js/pagefind-highlight.js && node --check source/js/randomPoem.js",
+    "check:syntax": "node --check tools/sync-obsidian-blogs.js && node --check tools/blog-doctor.js && node --check tools/publish-local.js && node --check tools/font-subsets.js && node --check tools/og-images.js && node --check tools/seasonal-poems.js && node --check tools/post-afterword.js && node --check scripts/accessibility.js && node --check scripts/font-subsets.js && node --check scripts/og-images.js && node --check scripts/poem-shards.js && node --check scripts/seasonal-poems.js && node --check scripts/post-afterword.js && node --check scripts/theme-patch.js && node --check source/js/pagefind-highlight.js && node --check source/js/randomPoem.js",
     "blog:sync": "node tools/sync-obsidian-blogs.js",
     "blog:sync:check": "node tools/sync-obsidian-blogs.js --dry-run",
     "blog:slug:check": "node tools/sync-obsidian-blogs.js --slug-check",
     "blog:slug:fix": "node tools/sync-obsidian-blogs.js --slug-fix",
     "blog:doctor": "node tools/blog-doctor.js",
-    "blog:check": "npm run blog:slug:check && npm run blog:sync:check && npm run blog:doctor",
+    "blog:check": "npm run blog:slug:check && npm run blog:sync:check",
     "blog:build": "npm run blog:sync && npm run build",
     "blog:ready": "npm run blog:slug:fix && npm run blog:sync && npm run build && npm run blog:doctor",
     "clean": "hexo clean",
@@ -19,7 +19,7 @@
     "server": "hexo server",
     "preview": "hexo server",
     "search:index": "pagefind --site public",
-    "publish:local": "npm run clean && npm run build && npm run blog:doctor && rsync -av --delete --exclude='.git/' --exclude='.gitignore' --exclude='.DS_Store' --exclude='.nojekyll' public/ ../Mau-Q.github.io/"
+    "publish:local": "node tools/publish-local.js"
   },
   "hexo": {
     "version": "8.1.2"
