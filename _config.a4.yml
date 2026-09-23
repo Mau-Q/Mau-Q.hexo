@@ -45,8 +45,6 @@ experience:
     summary: 记录计算机学习、项目实践与排错过程中真正想明白的部分。
     featuredCount: 1
     recentCount: 5
-  list:
-    excerptLength: 96
   search:
     enable: true
     path: /search/

@@ -121,7 +121,7 @@ npm run publish:local
   - `/search/` 使用 Pagefind 的本地 Web Component；查询只在浏览器内完成，不依赖搜索服务。
   - 从搜索结果进入文章时，`source/js/pagefind-highlight.js` 会按需加载 Pagefind 高亮模块；普通页面不会加载该模块。
   - 首页自动选择最新一篇文章作为“精选”，其余文章进入“最近文章”；数量在 `_config.a4.yml` 的 `experience.home` 中集中配置。
-  - `/list/` 按年份展示文章日期、分类、摘要和标签，摘要长度由 `experience.list.excerptLength` 控制。
+  - `/list/` 按年份展示文章日期、分类和标题，让文章目录更便于快速浏览。
   - 构建时会在 `.cache/og-images/` 生成 1200×630 PNG，并发布到 `/img/og/`；文章可用 front matter 的 `og_image` 覆盖自动卡片。
   - 分享卡片使用主题自带的本地霞鹜文楷完整字体渲染，避免 CI/Linux 环境缺少中文字体。
   - Pagefind 与分享卡片都是构建产物；直接运行 `npm run server` 前若未执行过构建，搜索页不会有可用索引。

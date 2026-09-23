@@ -1,7 +1,4 @@
 <%
-    var experience = theme.experience || {};
-    var listConfig = experience.list || {};
-    var excerptLength = Math.max(48, Number(listConfig.excerptLength || 96));
     var visiblePosts = site.posts.data
         .filter(function (post) { return !post.hide; })
         .slice()
@@ -12,12 +9,6 @@
         if (!postsByYear.has(year)) postsByYear.set(year, []);
         postsByYear.get(year).push(post);
     });
-
-    function postExcerpt(post) {
-        var raw = post.description || post.excerpt || post.content || '';
-        var plain = strip_html(raw).replace(/\s+/g, ' ').trim();
-        return plain.length > excerptLength ? plain.slice(0, excerptLength).trim() + '…' : plain;
-    }
 %>
 
 <section class="post-library" aria-labelledby="post-library-title" data-pagefind-ignore>
@@ -40,15 +31,6 @@
                             <% } %>
                         </div>
                         <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
-                        <% var excerpt = postExcerpt(post); %>
-                        <% if(excerpt) { %><p><%= excerpt %></p><% } %>
-                        <% if(post.tags && post.tags.length) { %>
-                            <ul class="article-tags" aria-label="文章标签">
-                                <% post.tags.data.forEach(function (tag) { %>
-                                    <li><a href="<%- url_for(tag.path) %>">#<%= tag.name %></a></li>
-                                <% }); %>
-                            </ul>
-                        <% } %>
                     </article>
                 <% }); %>
             </div>
