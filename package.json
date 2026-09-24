@@ -46,6 +46,6 @@
     "lunar-javascript": "^1.7.7",
     "pagefind": "^1.5.2",
     "sharp": "^0.35.3",
-    "subset-font": "^2.5.0"
+    "subset-font": "^2.9.0"
   }
 }
