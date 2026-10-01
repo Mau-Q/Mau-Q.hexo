@@ -141,6 +141,18 @@ test('doctor derives post outputs and rejects missing local sitemap targets', ()
   fs.appendFileSync(page, '<pre>tensor([[2.0]])</pre><code>[[3.0]]</code>');
   fs.writeFileSync(path.join(fixture.blogsDir, 'valid.md'), readyNote());
   assert.equal(runNode(doctorScript, [], fixture.root).status, 0, 'vault embeds and code arrays are valid');
+  const validPage = fs.readFileSync(page, 'utf8') + '<p>Input Tokens + Output Tokens; Token 数量; 给定 token</p>';
+  fs.writeFileSync(page, validPage);
+  assert.equal(runNode(doctorScript, [], fixture.root).status, 0, 'model token terminology is valid');
+  const validNoteFile = path.join(fixture.blogsDir, 'valid.md');
+  const validNote = readyNote() + '\nInput Tokens + Output Tokens; Token 数量; 给定 token\n';
+  fs.writeFileSync(validNoteFile, validNote);
+  assert.equal(runNode(doctorScript, [], fixture.root).status, 0, 'model terminology in Markdown is valid');
+  for (const credential of ['api_token: example-value', 'access token: example-value', 'token = example-value']) {
+    fs.writeFileSync(validNoteFile, validNote + '\n' + credential + '\n');
+    assert.match(runNode(doctorScript, [], fixture.root).stderr, /password or secret/);
+  }
+  fs.writeFileSync(validNoteFile, validNote);
   fs.appendFileSync(page, '<p>[[Unconverted note]]</p>');
   assert.match(runNode(doctorScript, [], fixture.root).stderr, /unresolved Obsidian wikilink/);
 });
@@ -148,13 +160,16 @@ test('doctor derives post outputs and rejects missing local sitemap targets', ()
 test('sync preserves Chinese heading links and distinguishes token terminology from credentials', () => {
   const fixture = makeFixture();
   const note = path.join(fixture.blogsDir, 'sample.md');
-  fs.writeFileSync(note, readyNote().replace('![[photo.png]]', '[[sample#模型能表示，不等于训练能找到|说明]]\nnext token / 下一个 token / 后续 token'));
+  const validNote = readyNote().replace('![[photo.png]]', '[[sample#模型能表示，不等于训练能找到|说明]]\nnext token / 下一个 token / 后续 token / Input Tokens / Output Tokens / Token 数量 / 给定 token');
+  fs.writeFileSync(note, validNote);
   const result = runNode(syncScript, [], fixture.root);
   assert.equal(result.status, 0, result.stderr);
   const output = fs.readFileSync(path.join(fixture.root, 'source/_posts/sample-post.md'), 'utf8');
   assert.ok(output.includes('/posts/sample-post/#' + encodeURIComponent('模型能表示，不等于训练能找到')));
-  fs.appendFileSync(note, '\napi_token: example-value\n');
-  assert.notEqual(runNode(syncScript, ['--dry-run'], fixture.root).status, 0);
+  for (const credential of ['api_token: example-value', 'access token: example-value', 'token = example-value']) {
+    fs.writeFileSync(note, validNote + '\n' + credential + '\n');
+    assert.notEqual(runNode(syncScript, ['--dry-run'], fixture.root).status, 0);
+  }
 });
 
 test('math renders subscripts and matrix rows while leaving code literals intact', () => {
