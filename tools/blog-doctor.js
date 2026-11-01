@@ -40,7 +40,7 @@ const contentRiskPatterns = [
   ['local file path', /(file:\/\/|\/Users\/rui\/)/],
   ['TODO', /\bTODO\b/i],
   ['FIXME', /\bFIXME\b/i],
-  ['unfinished draft marker', /待补|待完善|未完成|草稿/],
+  ['unfinished draft marker', /待补|待完善|未完成|草稿(?!纸)/],
   // Token counts are model terminology; named credentials and token assignments remain blocked.
   ['password or secret', /密码|password|passwd|secret|\b(?:api|access|auth|refresh|bearer)[_ -]?token\b|\btoken\s*[:=：]/i],
   ['account', /账号|账户|account/i],

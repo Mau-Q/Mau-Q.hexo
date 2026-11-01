@@ -20,7 +20,7 @@ const SMART_SLUG_REPLACEMENTS = loadSlugReplacements();
 const PUBLISHING_RISK_PATTERNS = [
   ['TODO', /\bTODO\b/i],
   ['FIXME', /\bFIXME\b/i],
-  ['unfinished draft marker', /待补|待完善|未完成|草稿/],
+  ['unfinished draft marker', /待补|待完善|未完成|草稿(?!纸)/],
   // Token counts are model terminology; named credentials and token assignments remain blocked.
   ['password or secret', /密码|password|passwd|secret|\b(?:api|access|auth|refresh|bearer)[_ -]?token\b|\btoken\s*[:=：]/i],
   ['account', /账号|账户|account/i],
@@ -702,7 +702,7 @@ function transformLine(line, note, slug, publishedMap) {
       const cleanAlt = alt.split('|')[0].trim();
       return `![${cleanAlt}](${url})`;
     })
-    .replace(/\[\[([^\]]+)\]\]/g, (_, inner) => transformWikiLink(inner, publishedMap));
+    .replace(/\[\[([^\]]+)\]\]/g, (_, inner) => transformWikiLink(inner, publishedMap, slug));
 }
 
 function transformEmbed(inner, note, slug) {
@@ -790,9 +790,9 @@ function imageSizeAttributes(size) {
   return '';
 }
 
-function transformWikiLink(inner, publishedMap) {
+function transformWikiLink(inner, publishedMap, currentSlug) {
   const parsed = parseWikiLink(inner);
-  const linkedSlug = lookupPublishedSlug(parsed.target, publishedMap);
+  const linkedSlug = parsed.target ? lookupPublishedSlug(parsed.target, publishedMap) : currentSlug;
   if (linkedSlug) {
     const anchor = parsed.heading ? '#' + encodeURIComponent(require('hexo-util').slugize(parsed.heading, { transform: 0 })) : '';
     return `[${parsed.display}](/posts/${linkedSlug}/${anchor})`;
@@ -801,7 +801,7 @@ function transformWikiLink(inner, publishedMap) {
 }
 
 function parseWikiLink(inner) {
-  const [targetPart, ...aliasParts] = inner.split('|');
+  const [targetPart, ...aliasParts] = inner.replace(/\\\|/g, '|').split('|');
   const targetWithAnchor = String(targetPart || '').trim();
   const target = cleanWikiTarget(targetWithAnchor);
   const heading = targetWithAnchor.includes('#') ? targetWithAnchor.split('#').slice(1).join('#').trim() : '';
