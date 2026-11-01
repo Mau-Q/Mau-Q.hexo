@@ -26,6 +26,7 @@ const OVERRIDES = [
   '_partial/head.ejs',
   '_partial/header.ejs',
   '_partial/post-header.ejs',
+  '_partial/post-card.ejs',
   '_partial/footer.ejs',
   '_partial/configcss/font.ejs',
 ];
@@ -82,6 +83,13 @@ hexo.on('generateBefore', function () {
     postBodyMarker,
     '    <div class="post-md"<% if(is_post()) { %> data-pagefind-body<% } %>>'
   );
+
+  const footerMetaStart = postContent.indexOf('    <div class="post-meta">');
+  const footerMetaEnd = postContent.indexOf('    <% if(theme.postInfo.prevAndNextLink.status', footerMetaStart);
+  if (footerMetaStart < 0 || footerMetaEnd < 0) {
+    throw new Error(`theme-patch: unable to locate post footer metadata in ${themePostFile}`);
+  }
+  postContent = postContent.slice(0, footerMetaStart) + postContent.slice(footerMetaEnd);
 
   const contentMarker = '        <%- page.content %>';
   if (!postContent.includes(contentMarker)) {

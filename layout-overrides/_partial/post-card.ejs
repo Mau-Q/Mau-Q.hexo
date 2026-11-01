@@ -1,0 +1,17 @@
+<%
+    var summaries = ((theme.experience || {}).home || {}).summaries || {};
+    var summary = post.description || summaries[post.slug] || '';
+%>
+<article class="reading-card">
+    <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
+    <% if(summary) { %>
+        <p class="reading-card-summary"><%= summary %></p>
+    <% } %>
+    <div class="reading-card-meta">
+        <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'YYYY-MM-DD') %></time>
+        <span>约 <%= min2read(post.content) %> 分钟</span>
+        <% if(post.categories && post.categories.length) { %>
+            <a href="<%- url_for(post.categories.data[0].path) %>"><%= post.categories.data[0].name %></a>
+        <% } %>
+    </div>
+</article>

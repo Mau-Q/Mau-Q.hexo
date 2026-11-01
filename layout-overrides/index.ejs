@@ -5,42 +5,12 @@
         .filter(function (post) { return !post.hide; })
         .slice()
         .sort(function (a, b) { return b.date - a.date; });
-    var featuredCount = Math.max(0, Number(home.featuredCount || 1));
     var recentCount = Math.max(1, Number(home.recentCount || 5));
-    var featuredPosts = visiblePosts.filter(function (post) { return post.featured || post.top; });
-    if (!featuredPosts.length) featuredPosts = visiblePosts.slice(0, featuredCount);
-    featuredPosts = featuredPosts.slice(0, featuredCount);
-    var featuredPaths = new Set(featuredPosts.map(function (post) { return post.path; }));
-    var recentPosts = visiblePosts.filter(function (post) { return !featuredPaths.has(post.path); }).slice(0, recentCount);
+    var recentPosts = visiblePosts.slice(0, recentCount);
 
 %>
 
 <div class="post-main home-content" data-pagefind-ignore>
-    <% var allPages = site.pages.data; %>
-    <% for(var i = 0; i < allPages.length; i++) { %>
-        <% if(allPages[i].path == "index/index.html") { %>
-            <section class="home-introduction" aria-labelledby="home-introduction-title">
-                <h2 id="home-introduction-title">关于这里</h2>
-                <div class="post-md"><%- allPages[i].content %></div>
-            </section>
-        <% break; } %>
-    <% } %>
-
-    <% if(featuredPosts.length) { %>
-        <section class="home-section" aria-labelledby="featured-posts-title">
-            <div class="section-heading">
-                <h2 id="featured-posts-title">精选</h2>
-            </div>
-            <div class="featured-posts">
-                <% featuredPosts.forEach(function (post) { %>
-                    <article class="featured-post-card">
-                        <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
-                    </article>
-                <% }); %>
-            </div>
-        </section>
-    <% } %>
-
     <section class="home-section" aria-labelledby="recent-posts-title">
         <div class="section-heading">
             <h2 id="recent-posts-title">最近文章</h2>
@@ -50,10 +20,7 @@
             <ol class="recent-post-list">
                 <% recentPosts.forEach(function (post) { %>
                     <li>
-                        <article>
-                            <time datetime="<%= date(post.date, 'YYYY-MM-DD') %>"><%= date(post.date, 'MM-DD') %></time>
-                            <h3><a href="<%- url_for(post.path) %>"><%= post.title %></a></h3>
-                        </article>
+                        <%- partial('_partial/post-card', { post: post }) %>
                     </li>
                 <% }); %>
             </ol>

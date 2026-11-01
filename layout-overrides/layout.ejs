@@ -6,7 +6,7 @@
     <%- partial('_partial/configcss/color') %>
     <%- partial('_partial/configcss/imageShow') %>
 
-    <body>
+    <body<% if(path == 'index.html') { %> class="home-page"<% } %>>
         <a class="skip-link" href="#main-content">跳到正文</a>
         <% if(theme.tool.darkMode) { %>
         <script>
@@ -40,7 +40,7 @@
                 document.documentElement.style.backgroundColor = '#1e1e1e';
                 document.documentElement.style.colorScheme = 'dark';
                 return loadDarkReader().then(() => DarkReader.enable(drOptions, {
-                    css: <%- JSON.stringify(code_theme_css()) %>
+                    css: <%- JSON.stringify(code_theme_css() + '\n' + dark_reading_css()) %>
                 }));
             }
 
@@ -57,6 +57,7 @@
 
             window.addEventListener('DOMContentLoaded', () => {
                 const btn = document.createElement('button');
+                btn.className = 'theme-toggle';
                 btn.innerText = '🌓';
                 btn.type = 'button';
                 btn.setAttribute('aria-label', '切换深色模式');

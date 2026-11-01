@@ -1,8 +1,5 @@
-<%
-    var experience = theme.experience || {};
-    var home = experience.home || {};
-%>
-<header class="home-hero">
+<%- partial('_partial/post-header') %>
+<section class="home-hero" aria-label="首页诗句">
     <% if(theme.index.header != null || theme.index.header == "") { %>
         <div class="index-header-line" aria-live="polite">
             <% if(theme.index.hitokoto) { %>
@@ -19,19 +16,4 @@
         </div>
     <% } %>
 
-    <p class="home-eyebrow"><%= home.eyebrow || config.subtitle %></p>
-    <h1 class="index-logo"><a href="<%- url_for('/') %>"><%= config.title %></a></h1>
-    <p class="home-summary"><%= home.summary || config.description %></p>
-
-    <nav class="home-navigation" aria-label="主要导航">
-        <ul>
-            <% for (name in theme.menu) { %>
-                <% if(theme.menu[name] == '/' || theme.showInMenu.includes(name)) { %>
-                    <li>
-                        <a href="<%- url_for(theme.menu[name]) %>"<% if(theme.menu[name] == '/') { %> aria-current="page"<% } %>><%= name %></a>
-                    </li>
-                <% } %>
-            <% } %>
-        </ul>
-    </nav>
-</header>
+</section>

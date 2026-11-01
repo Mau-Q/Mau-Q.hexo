@@ -11,15 +11,12 @@
 
 <header class="header">
     <div class="header-container">
-        <img
-            alt="<%= config.title %>"
-            class="header-img"
-            src="<%- url_for(theme.favicon) %>"
-            width="56"
-            height="56"
-        />
         <div class="header-content">
-            <a class="logo" href="<%- url_for('/') %>"><%= config.title %></a>
+            <% if(path == 'index.html') { %>
+                <h1 class="site-title"><a class="logo" href="<%- url_for('/') %>"><%= config.title %></a></h1>
+            <% } else { %>
+                <a class="logo" href="<%- url_for('/') %>"><%= config.title %></a>
+            <% } %>
             <span class="description"><%= config.description %></span>
         </div>
     </div>
