@@ -17,17 +17,6 @@ tags:
 
 [← DataFlex 总览](/posts/dataflex/)
 
-## 本篇目录
-
-- [领域配比问题](/posts/dataflex-mixture/#Mixture-%E5%88%B0%E5%BA%95%E5%9C%A8%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98%EF%BC%9F)
-- [Static Mixer](/posts/dataflex-mixture/#Static-Mixer%EF%BC%9A%E6%9C%80%E7%AE%80%E5%8D%95%EF%BC%8C%E4%BD%86%E4%B9%9F%E6%98%AF%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E5%AF%B9%E7%85%A7)
-- [Random Mixer](/posts/dataflex-mixture/#Random-Mixer%EF%BC%9A%E9%9A%8F%E6%9C%BA%E7%94%9F%E6%88%90%E9%85%8D%E6%AF%94)
-- [DoReMi](/posts/dataflex-mixture/#DoReMi%EF%BC%9A%E7%94%A8%E5%B0%8F%E6%A8%A1%E5%9E%8B%E5%AF%BB%E6%89%BE%E9%80%82%E5%90%88%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%9A%84%E9%A2%86%E5%9F%9F%E6%AF%94%E4%BE%8B)
-- [ODM](/posts/dataflex-mixture/#ODM%EF%BC%9A%E5%9C%A8%E7%9B%AE%E6%A0%87%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%E8%BF%87%E7%A8%8B%E4%B8%AD%E5%8A%A8%E6%80%81%E8%B0%83%E6%95%B4%E6%AF%94%E4%BE%8B)
-- [Dynamic MoE](/posts/dataflex-mixture/#Dynamic-MoE%EF%BC%9A%E5%88%A9%E7%94%A8%E4%B8%93%E5%AE%B6%E8%B7%AF%E7%94%B1%E5%85%B3%E7%B3%BB%E5%86%B3%E5%AE%9A%E9%A2%86%E5%9F%9F%E6%AF%94%E4%BE%8B)
-- [五种算法对比](/posts/dataflex-mixture/#%E4%BA%94%E7%A7%8D-Mixture-%E7%AE%97%E6%B3%95%E7%9A%84%E5%AE%8C%E6%95%B4%E6%A8%AA%E5%90%91%E6%AF%94%E8%BE%83)
-- [训练采样机制](/posts/dataflex-mixture/#DataFlex-%E5%A6%82%E4%BD%95%E7%9C%9F%E6%AD%A3%E6%8A%8A%E9%A2%86%E5%9F%9F%E6%AF%94%E4%BE%8B%E5%8F%98%E6%88%90%E8%AE%AD%E7%BB%83%E6%95%B0%E6%8D%AE%EF%BC%9F)
-
 ## Mixture 到底在解决什么问题？
 
 对于有多个来源的数据，Mixture 就是要决定：

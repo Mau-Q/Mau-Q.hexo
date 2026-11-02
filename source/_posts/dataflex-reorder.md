@@ -17,14 +17,6 @@ tags:
 
 [← DataFlex 总览](/posts/dataflex/)
 
-## 本篇目录
-
-- [整体框架](/posts/dataflex-reorder/#1-Reorder-%E7%9A%84%E6%95%B4%E4%BD%93%E6%A1%86%E6%9E%B6)
-- [排序原则](/posts/dataflex-reorder/#2-%E5%9B%9B%E7%A7%8D%E6%95%B0%E6%8D%AE%E6%8E%92%E5%BA%8F%E5%8E%9F%E5%88%99)
-- [算法对比](/posts/dataflex-reorder/#3-%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E5%AF%B9%E6%AF%94)
-- [评分信号](/posts/dataflex-reorder/#4-%E8%AF%84%E5%88%86%E4%BF%A1%E5%8F%B7)
-- [静态与动态重排](/posts/dataflex-reorder/#5-Static-%E4%B8%8E-Dynamic-Reorder)
-
 Reorder 不改变训练数据的集合和权重，而是改变样本进入模型训练的顺序。由于模型参数不断更新，不同训练顺序可能产生不同的优化轨迹。这也是课程学习（Curriculum Learning）的基础。
 
 ## 1. Reorder 的整体框架

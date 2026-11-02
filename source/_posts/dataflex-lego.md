@@ -17,15 +17,6 @@ tags:
 
 [← DataFlex 总览](/posts/dataflex/)
 
-## 本篇目录
-
-- [执行空间与阶段](/posts/dataflex-lego/#1-Lego-%E7%9A%84%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84)
-- [预设 Pipeline](/posts/dataflex-lego/#2-%E5%9B%9B%E7%A7%8D%E9%A2%84%E8%AE%BE-Pipeline)
-- [调度机制](/posts/dataflex-lego/#3-%E6%A0%B8%E5%BF%83%E8%B0%83%E5%BA%A6%E6%9C%BA%E5%88%B6)
-- [两层时钟](/posts/dataflex-lego/#3-1-%E4%B8%A4%E5%B1%82%E6%97%B6%E9%92%9F)
-- [ScoreBoard](/posts/dataflex-lego/#3-2-ScoreBoard%EF%BC%9A%E5%85%B1%E4%BA%AB%E8%AF%84%E5%88%86%E7%BC%93%E5%AD%98)
-- [工程限制](/posts/dataflex-lego/#4-%E9%87%8D%E8%A6%81%E7%9A%84%E5%B7%A5%E7%A8%8B%E9%99%90%E5%88%B6)
-
 Lego 不是新的数据优化算法，而是将 Selection、Mixture、Reorder、Reweighting 组合到同一个训练过程中，统一管理执行顺序、更新频率和数据依赖。
 
 ## 1. Lego 的整体架构

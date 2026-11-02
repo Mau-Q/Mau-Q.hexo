@@ -3,6 +3,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
+const { outlineHeadings } = require('../tools/article-outline');
+
+hexo.extend.helper.register('article_toc', function (content, options) {
+  return this.toc(outlineHeadings(content), options);
+});
 
 // Change resource URLs with their contents so cached styles cannot undo a fix.
 function version(file) {
@@ -10,6 +15,8 @@ function version(file) {
 }
 
 hexo.extend.filter.register('after_render:html', html => {
+  html = html.replace(/href="\/css\/custom\.css(?:\?[^\"]*)?"/g,
+    `href="/css/custom.css?v=${version('css/custom.css')}"`);
   if (!html.includes('id="toc"')) return html;
   const css = `/css/article-outline.css?v=${version('css/article-outline.css')}`;
   return html

@@ -17,17 +17,6 @@ tags:
 
 [← DataFlex 总览](/posts/dataflex/)
 
-## 本篇目录
-
-- [加权目标](/posts/dataflex-reweighting/#Reweighting-%E5%88%B0%E5%BA%95%E5%9C%A8%E6%94%B9%E5%8F%98%E4%BB%80%E4%B9%88%EF%BC%9F)
-- [逐样本 Loss 与训练接入](/posts/dataflex-reweighting/#DataFlex-%E5%AE%9E%E9%99%85%E5%9C%A8%E8%AE%AD%E7%BB%83%E7%9A%84%E5%93%AA%E4%B8%80%E6%AD%A5%E5%8A%A0%E6%9D%83%EF%BC%9F)
-- [Loss Reweighting](/posts/dataflex-reweighting/#Loss-Reweighting)
-- [ADAPT](/posts/dataflex-reweighting/#ADAPT%EF%BC%9A%E5%88%A9%E7%94%A8%E6%A8%A1%E5%9E%8B%E8%A1%A8%E5%BE%81%E5%88%A4%E6%96%AD%E4%B8%8E%E7%9B%AE%E6%A0%87%E4%BB%BB%E5%8A%A1%E7%9A%84%E5%85%B3%E7%B3%BB)
-- [Joint-Update-Aware](/posts/dataflex-reweighting/#Joint-Update-Aware%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E5%8F%AA%E8%80%83%E8%99%91%E6%AF%8F%E6%9D%A1%E6%A0%B7%E6%9C%AC%E8%87%AA%E8%BA%AB%EF%BC%9F)
-- [多模态 Weighter](/posts/dataflex-reweighting/#%E4%B8%89%E4%B8%AA%E5%A4%9A%E6%A8%A1%E6%80%81-Weighter)
-- [七种 Weighter 对比](/posts/dataflex-reweighting/#DataFlex-Reweighting%EF%BC%9A7-%E7%A7%8D-Weighter-%E5%AF%B9%E6%AF%94)
-- [权重尺度与 Loss 归约](/posts/dataflex-reweighting/#DataFlex-%E8%AE%AD%E7%BB%83%E4%B8%AD%E7%9A%84%E9%87%8D%E8%A6%81%E9%97%AE%E9%A2%98)
-
 ## Reweighting 到底在改变什么？
 
 假设一个 batch 中有四条样本：ABCD，Loss 分别为 $\ell_i$。

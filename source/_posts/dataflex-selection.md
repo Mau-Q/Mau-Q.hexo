@@ -17,17 +17,6 @@ tags:
 
 [← DataFlex 总览](/posts/dataflex/)
 
-## 本篇目录
-
-- [选择目标](/posts/dataflex-selection/#Selection-%E7%A9%B6%E7%AB%9F%E5%9C%A8%E4%BC%98%E5%8C%96%E4%BB%80%E4%B9%88%EF%BC%9F)
-- [损失与学习变化](/posts/dataflex-selection/#%E6%8D%9F%E5%A4%B1%E4%B8%8E%E5%AD%A6%E4%B9%A0%E5%8F%98%E5%8C%96)
-- [梯度与影响估计](/posts/dataflex-selection/#%E6%A2%AF%E5%BA%A6%E4%B8%8E%E5%BD%B1%E5%93%8D%E7%B1%BB%EF%BC%9A%E8%AE%AD%E7%BB%83%E8%BF%99%E6%9D%A1%E6%95%B0%E6%8D%AE%EF%BC%8C%E7%A9%B6%E7%AB%9F%E5%AF%B9%E7%9B%AE%E6%A0%87%E6%9C%89%E6%B2%A1%E6%9C%89%E5%B8%AE%E5%8A%A9%EF%BC%9F)
-- [表征与分布](/posts/dataflex-selection/#%E8%A1%A8%E5%BE%81%E4%B8%8E%E5%88%86%E5%B8%83%E7%B1%BB%EF%BC%9A%E9%80%89%E5%87%BA%E7%9A%84%E6%95%B0%E6%8D%AE%E5%BA%94%E8%AF%A5%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7%EF%BC%9F)
-- [多指标自适应](/posts/dataflex-selection/#%E5%A4%9A%E6%8C%87%E6%A0%87%E8%87%AA%E9%80%82%E5%BA%94)
-- [随机基线](/posts/dataflex-selection/#%E5%9F%BA%E7%BA%BF%E4%B8%8E%E6%89%A9%E5%B1%95)
-- [15 种算法对比](/posts/dataflex-selection/#DataFlex-Selection%EF%BC%9A15-%E7%A7%8D%E7%AE%97%E6%B3%95%E6%80%BB%E8%A7%88)
-- [训练接入](/posts/dataflex-selection/#DataFlex-%E7%9A%84-Selection-%E6%A8%A1%E5%9D%97%E5%88%B0%E5%BA%95%E6%80%8E%E6%A0%B7%E6%8E%A5%E5%85%A5%E8%AE%AD%E7%BB%83%EF%BC%9F)
-
 ## Selection 究竟在优化什么？
 
 假设你有：

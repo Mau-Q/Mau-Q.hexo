@@ -16,6 +16,16 @@
 
 const fs = require('fs');
 const path = require('path');
+const { escapeHTML } = require('hexo-util');
+
+hexo.extend.helper.register('article_title', function (title) {
+  const text = String(title || '');
+  const separator = text.indexOf('：');
+  if (separator < 0) return escapeHTML(text);
+  return [text.slice(0, separator + 1), text.slice(separator + 1)]
+    .map(part => `<span class="post-title-part">${escapeHTML(part)}</span>`)
+    .join('<wbr>');
+});
 
 const OVERRIDES_DIR = path.join(__dirname, '..', 'layout-overrides');
 
@@ -68,12 +78,14 @@ hexo.on('generateBefore', function () {
     .join(leftTitle.replace('<div ', '<h1 ').replace('</div>', '</h1>'))
     .split(centeredTitle)
     .join(centeredTitle.replace('<div ', '<h1 ').replace('</div>', '</h1>'));
+  postContent = postContent.replaceAll('<%= page.title %>', '<%- article_title(page.title) %>');
 
   const tocDepth = '                    max_depth: 6';
   if (postContent.split(tocDepth).length - 1 !== 1) {
     throw new Error(`theme-patch: unexpected post TOC depth in ${themePostFile}`);
   }
   postContent = postContent.replace(tocDepth, '                    max_depth: 3');
+  postContent = postContent.replace('toc(page.content, {', 'article_toc(page.content, {');
 
   const postBodyMarker = '    <div class="post-md">';
   if (!postContent.includes(postBodyMarker)) {
