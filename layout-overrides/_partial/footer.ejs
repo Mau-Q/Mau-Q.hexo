@@ -81,7 +81,7 @@
     <%- js('js/lightgallery/plugins/lg-rotate.umd.min.js') %>
     <%- js('js/lightgallery/plugins/lg-paper.umd.min.js') %>
 
-    <script type="text/javascript">
+    <script>
         var galleryRoot = document.querySelector('[class~=".article-gallery"]') || document.querySelector('.post-md');
         if (galleryRoot && galleryRoot.querySelector('.gallery-item') && typeof lightGallery !== 'undefined') {
             lightGallery(galleryRoot, {

@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="<%= config.language || 'en' %>">
-    <%- partial('_partial/configcss/font') %>
     <%- partial('_partial/head') %>
-    <%- partial('_partial/configcss/width') %>
-    <%- partial('_partial/configcss/color') %>
-    <%- partial('_partial/configcss/imageShow') %>
 
     <body<% if(path == 'index.html') { %> class="home-page"<% } %>>
         <a class="skip-link" href="#main-content">跳到正文</a>
@@ -185,11 +181,11 @@
                 </button>
             <% } %>
         </main>
+        <script src="<%= url_for('/js/emojiHandler.js') %>"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                wrapEmojis('.paper');
+            });
+        </script>
     </body>
 </html>
-<script src="<%= url_for('/js/emojiHandler.js') %>"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        wrapEmojis('.paper');
-    });
-</script>

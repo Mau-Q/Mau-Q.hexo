@@ -22,11 +22,12 @@
         }
     %>
     <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
+    <%- partial('_partial/configcss/font') %>
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
     <meta name="theme-color" content="#f7f5ed" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="hexo-theme-A4" content="<%= theme.version %>" />
+    <meta name="hexo-theme-A4" content="<%= theme.version %>">
     <link rel="icon" href="<%- url_for(theme.favicon) %>">
     <link rel="alternate" type="application/atom+xml" title="<%= config.title %>" href="<%- full_url_for('/atom.xml') %>">
     <link rel="canonical" href="<%- canonicalUrl %>">
@@ -43,8 +44,8 @@
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="<%= page.title ? '《' + page.title + '》分享卡片' : config.title + ' 博客分享卡片' %>">
     <% if(is_post()) { %>
-        <meta data-pagefind-meta="title" content="<%= page.title %>">
-        <meta data-pagefind-meta="image" content="<%- ogImagePath %>">
+        <meta name="pagefind:title" data-pagefind-meta="title" content="<%= page.title %>">
+        <meta name="pagefind:image" data-pagefind-meta="image" content="<%- ogImagePath %>">
         <script type="application/ld+json"><%- JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'BlogPosting',
@@ -215,4 +216,7 @@
     <% } %>
 
     <!-- Local LXGW WenKai font, CDN removed for stability -->
+    <%- partial('_partial/configcss/width') %>
+    <%- partial('_partial/configcss/color') %>
+    <%- partial('_partial/configcss/imageShow') %>
 </head>
